@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package gophkeeper;
+
+option go_package = "./grpc";
+
+message GeneratePasswordRequest{
+  int32 length = 1 [json_name = "length"];
+}
+message GeneratePasswordResponse{
+  string password = 1 [json_name = "password"];
+}
+message RegisterRequest{
+  string login = 1 [json_name = "login"];
+  string password = 2 [json_name = "password"];
+}
+message RegisterResponse{
+  bool register_status = 1 [json_name = "register_status"];
+  string register_message = 2 [json_name = "register_message"];
+}
+message LoginRequest{
+  string login = 1 [json_name = "login"];
+  string password = 2 [json_name = "password"];
+}
+message LoginResponse{
+  bool login_status = 1 [json_name = "login_status"];
+  string login_message = 2 [json_name = "login_message"];
+}
+service GophKeeper { 
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc GeneratePassword(GeneratePasswordRequest) returns (GeneratePasswordResponse);
+}
