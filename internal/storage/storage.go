@@ -8,4 +8,5 @@ import (
 
 type Storager interface {
 	Register(ctx context.Context, r model.StorageRegisterRequest) (model.StorageRegisterResponse, error)
+	PasswordHash(ctx context.Context, r model.StoragePasswordHashRequest) (model.StoragePasswordHashResponse, error)
 }

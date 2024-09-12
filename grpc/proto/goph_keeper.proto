@@ -25,6 +25,7 @@ message LoginRequest{
 message LoginResponse{
   bool login_status = 1 [json_name = "login_status"];
   string login_message = 2 [json_name = "login_message"];
+  string token = 3 [json_name = "token"];
 }
 service GophKeeper { 
   rpc Register(RegisterRequest) returns (RegisterResponse);

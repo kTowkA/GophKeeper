@@ -13,6 +13,7 @@ import (
 	mocks "github.com/kTowkA/GophKeeper/internal/storage/mocs"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -121,6 +122,83 @@ func (suite *ServerTest) TestRegister() {
 	}
 }
 
+func (suite *ServerTest) TestLogin() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	tests := []Test{
+		{
+			name: "пользователь не существует",
+			request: &pb.LoginRequest{
+				Login:    "1",
+				Password: "2",
+			},
+			ctx:           ctx,
+			wantError:     true,
+			wantgRPCError: codes.NotFound,
+			mock: func() {
+				suite.ms.On("PasswordHash", mock.Anything, model.StoragePasswordHashRequest{Login: "1"}).Return(model.StoragePasswordHashResponse{}, storage.ErrLoginIsNotExist).Once()
+			},
+		},
+		{
+			name: "ошибка в БД",
+			request: &pb.LoginRequest{
+				Login:    "1",
+				Password: "2",
+			},
+			ctx:       ctx,
+			wantError: true,
+			mock: func() {
+				suite.ms.On("PasswordHash", mock.Anything, model.StoragePasswordHashRequest{Login: "1"}).Return(model.StoragePasswordHashResponse{}, errors.New("ошибка в базе данных")).Once()
+			},
+		},
+		{
+			name: "неверный пароль",
+			request: &pb.LoginRequest{
+				Login:    "1",
+				Password: "2",
+			},
+			ctx:           ctx,
+			wantError:     true,
+			wantgRPCError: codes.PermissionDenied,
+			mock: func() {
+				suite.ms.On("PasswordHash", mock.Anything, model.StoragePasswordHashRequest{Login: "1"}).Return(model.StoragePasswordHashResponse{PasswordHash: "123"}, nil).Once()
+			},
+		},
+		{
+			name: "все хорошо",
+			request: &pb.LoginRequest{
+				Login:    "1",
+				Password: "2",
+			},
+			ctx:       ctx,
+			wantError: false,
+			mock: func() {
+				pwd, _ := bcrypt.GenerateFromPassword([]byte("2"), bcrypt.DefaultCost)
+				suite.ms.On("PasswordHash", mock.Anything, model.StoragePasswordHashRequest{Login: "1"}).Return(model.StoragePasswordHashResponse{PasswordHash: string(pwd)}, nil).Once()
+			},
+		},
+	}
+
+	for _, t := range tests {
+		if t.mock != nil {
+			t.mock()
+		}
+		_, err := suite.gs.Login(t.ctx, (t.request).(*pb.LoginRequest))
+		if !t.wantError {
+			suite.NoError(err, t.name)
+			continue
+		}
+		if t.wantgRPCError > 0 {
+			if e, ok := status.FromError(err); ok {
+				suite.EqualValues(t.wantgRPCError, e.Code(), t.name)
+			} else {
+				suite.Fail("должна содержаться ошибка", t.name)
+			}
+			continue
+		}
+		suite.Error(err, t.name)
+	}
+}
 func TestAppSuite(t *testing.T) {
 	suite.Run(t, new(ServerTest))
 }

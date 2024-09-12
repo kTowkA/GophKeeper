@@ -3,6 +3,7 @@ module github.com/kTowkA/GophKeeper
 go 1.22.4
 
 require (
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/crypto v0.24.0
 	google.golang.org/grpc v1.66.1

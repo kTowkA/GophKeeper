@@ -14,6 +14,34 @@ type Storager struct {
 	mock.Mock
 }
 
+// PasswordHash provides a mock function with given fields: ctx, r
+func (_m *Storager) PasswordHash(ctx context.Context, r model.StoragePasswordHashRequest) (model.StoragePasswordHashResponse, error) {
+	ret := _m.Called(ctx, r)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PasswordHash")
+	}
+
+	var r0 model.StoragePasswordHashResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.StoragePasswordHashRequest) (model.StoragePasswordHashResponse, error)); ok {
+		return rf(ctx, r)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, model.StoragePasswordHashRequest) model.StoragePasswordHashResponse); ok {
+		r0 = rf(ctx, r)
+	} else {
+		r0 = ret.Get(0).(model.StoragePasswordHashResponse)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, model.StoragePasswordHashRequest) error); ok {
+		r1 = rf(ctx, r)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Register provides a mock function with given fields: ctx, r
 func (_m *Storager) Register(ctx context.Context, r model.StorageRegisterRequest) (model.StorageRegisterResponse, error) {
 	ret := _m.Called(ctx, r)

@@ -78,3 +78,10 @@ func TestValidatePassword(t *testing.T) {
 		assert.ErrorIs(t, err, tt.wantError, tt.name)
 	}
 }
+
+func TestGenerateToken(t *testing.T) {
+	login := "login"
+	secret := "secret"
+	_, err := generateToken(login, secret)
+	assert.NoError(t, err)
+}
