@@ -26,7 +26,7 @@ const (
 )
 
 var (
-	symbols                      = []string{"!", "@", "#", "$", "%", "\\^", "&", "?", "*", "\\(", "\\)", "\\[", "\\]", "_", "\\-", "+", "=", "|", "\\."}
+	symbols                      = []string{"!", "@", "#", "$", "%", "\\\\", "\\^", "&", "?", "*", "\\(", "\\)", "\\[", "\\]", "_", "\\-", "+", "=", "|", "\\."}
 	ErrValidatePasswordMinLength = fmt.Errorf("пароль должен быть не менее %d символов длиной", validate_password_min_length)
 	ErrValidatePasswordLowerCase = errors.New("пароль должен содержать символы в нижнем регистре")
 	ErrValidatePasswordUpperCase = errors.New("пароль должен содержать символы в верхнем регистре")
