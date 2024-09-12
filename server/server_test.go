@@ -60,7 +60,7 @@ func (suite *ServerTest) TestRegister() {
 			name: "пользователь существует",
 			request: &pb.RegisterRequest{
 				Login:    "1",
-				Password: "2",
+				Password: "2111qweQASXC!",
 			},
 			ctx:           ctx,
 			wantgRPCError: codes.AlreadyExists,
@@ -73,7 +73,7 @@ func (suite *ServerTest) TestRegister() {
 			name: "ошибка при сохранении в базу данных",
 			request: &pb.RegisterRequest{
 				Login:    "1",
-				Password: "2",
+				Password: "2111qweQASXC!",
 			},
 			ctx:       ctx,
 			wantError: true,
@@ -85,7 +85,7 @@ func (suite *ServerTest) TestRegister() {
 			name: "успешная регистрация",
 			request: &pb.RegisterRequest{
 				Login:    "1",
-				Password: "2",
+				Password: "2111qweQASXC!",
 			},
 			ctx:       ctx,
 			wantError: false,
