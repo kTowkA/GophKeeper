@@ -22,6 +22,8 @@ const (
 	GophKeeper_Register_FullMethodName         = "/gophkeeper.GophKeeper/Register"
 	GophKeeper_Login_FullMethodName            = "/gophkeeper.GophKeeper/Login"
 	GophKeeper_GeneratePassword_FullMethodName = "/gophkeeper.GophKeeper/GeneratePassword"
+	GophKeeper_Save_FullMethodName             = "/gophkeeper.GophKeeper/Save"
+	GophKeeper_Load_FullMethodName             = "/gophkeeper.GophKeeper/Load"
 )
 
 // GophKeeperClient is the client API for GophKeeper service.
@@ -31,6 +33,8 @@ type GophKeeperClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	GeneratePassword(ctx context.Context, in *GeneratePasswordRequest, opts ...grpc.CallOption) (*GeneratePasswordResponse, error)
+	Save(ctx context.Context, in *SaveRequest, opts ...grpc.CallOption) (*SaveResponse, error)
+	Load(ctx context.Context, in *LoadReques, opts ...grpc.CallOption) (*LoadResponse, error)
 }
 
 type gophKeeperClient struct {
@@ -71,6 +75,26 @@ func (c *gophKeeperClient) GeneratePassword(ctx context.Context, in *GeneratePas
 	return out, nil
 }
 
+func (c *gophKeeperClient) Save(ctx context.Context, in *SaveRequest, opts ...grpc.CallOption) (*SaveResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SaveResponse)
+	err := c.cc.Invoke(ctx, GophKeeper_Save_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gophKeeperClient) Load(ctx context.Context, in *LoadReques, opts ...grpc.CallOption) (*LoadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LoadResponse)
+	err := c.cc.Invoke(ctx, GophKeeper_Load_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GophKeeperServer is the server API for GophKeeper service.
 // All implementations must embed UnimplementedGophKeeperServer
 // for forward compatibility.
@@ -78,6 +102,8 @@ type GophKeeperServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	GeneratePassword(context.Context, *GeneratePasswordRequest) (*GeneratePasswordResponse, error)
+	Save(context.Context, *SaveRequest) (*SaveResponse, error)
+	Load(context.Context, *LoadReques) (*LoadResponse, error)
 	mustEmbedUnimplementedGophKeeperServer()
 }
 
@@ -96,6 +122,12 @@ func (UnimplementedGophKeeperServer) Login(context.Context, *LoginRequest) (*Log
 }
 func (UnimplementedGophKeeperServer) GeneratePassword(context.Context, *GeneratePasswordRequest) (*GeneratePasswordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GeneratePassword not implemented")
+}
+func (UnimplementedGophKeeperServer) Save(context.Context, *SaveRequest) (*SaveResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Save not implemented")
+}
+func (UnimplementedGophKeeperServer) Load(context.Context, *LoadReques) (*LoadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Load not implemented")
 }
 func (UnimplementedGophKeeperServer) mustEmbedUnimplementedGophKeeperServer() {}
 func (UnimplementedGophKeeperServer) testEmbeddedByValue()                    {}
@@ -172,6 +204,42 @@ func _GophKeeper_GeneratePassword_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GophKeeper_Save_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GophKeeperServer).Save(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GophKeeper_Save_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GophKeeperServer).Save(ctx, req.(*SaveRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GophKeeper_Load_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoadReques)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GophKeeperServer).Load(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GophKeeper_Load_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GophKeeperServer).Load(ctx, req.(*LoadReques))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GophKeeper_ServiceDesc is the grpc.ServiceDesc for GophKeeper service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +258,14 @@ var GophKeeper_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GeneratePassword",
 			Handler:    _GophKeeper_GeneratePassword_Handler,
+		},
+		{
+			MethodName: "Save",
+			Handler:    _GophKeeper_Save_Handler,
+		},
+		{
+			MethodName: "Load",
+			Handler:    _GophKeeper_Load_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

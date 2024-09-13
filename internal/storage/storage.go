@@ -7,6 +7,11 @@ import (
 )
 
 type Storager interface {
-	Register(ctx context.Context, r model.StorageRegisterRequest) (model.StorageRegisterResponse, error)
-	PasswordHash(ctx context.Context, r model.StoragePasswordHashRequest) (model.StoragePasswordHashResponse, error)
+	Register(context.Context, model.StorageRegisterRequest) (model.StorageRegisterResponse, error)
+	PasswordHash(context.Context, model.StoragePasswordHashRequest) (model.StoragePasswordHashResponse, error)
+}
+
+type KeepStorager interface {
+	Save(context.Context, model.StorageSaveRequest) (model.StorageSaveResponse, error)
+	Load(context.Context, model.StorageLoadRequest) (model.StorageLoadResponse, error)
 }

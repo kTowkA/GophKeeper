@@ -1,10 +1,14 @@
 package server
 
 import (
+	"context"
 	"testing"
 	"unicode/utf8"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 func TestValidatePassword(t *testing.T) {
@@ -99,4 +103,34 @@ func TestGeneratePassword(t *testing.T) {
 	assert.EqualValues(t, 16, utf8.RuneCountInString(pwd))
 	err = validatePassword(pwd)
 	assert.NoError(t, err)
+}
+
+func TestGetUsername(t *testing.T) {
+	username := "test_username"
+	secret := "secret"
+	token, err := generateToken(username, secret)
+	assert.NoError(t, err)
+
+	// ok
+	md := metadata.New(map[string]string{TokenTitle: token})
+	ctx := metadata.NewIncomingContext(context.Background(), md)
+	haveUsername, err := usernameFromToken(ctx, secret)
+	assert.NoError(t, err)
+	assert.EqualValues(t, username, haveUsername)
+
+	// не найден контекст
+	_, err = usernameFromToken(context.Background(), secret)
+	assert.Error(t, err)
+	st, _ := status.FromError(err)
+	assert.EqualValues(t, codes.Unauthenticated, st.Code())
+
+	// не найден токен в контексте
+	_, err = usernameFromToken(metadata.NewIncomingContext(context.Background(), metadata.MD{}), secret)
+	assert.Error(t, err)
+	st, _ = status.FromError(err)
+	assert.EqualValues(t, codes.Unauthenticated, st.Code())
+
+	// неверный секрет
+	_, err = usernameFromToken(ctx, secret+"!")
+	assert.Error(t, err)
 }

@@ -27,8 +27,34 @@ message LoginResponse{
   string login_message = 2 [json_name = "login_message"];
   string token = 3 [json_name = "token"];
 }
+message KeeperElement{
+  string title = 1 [json_name = "title"];
+  string description = 2 [json_name = "description"];
+  string type = 3 [json_name = "type"];
+  message KeeperValue{
+    string title = 1 [json_name = "title"];
+    string description = 2 [json_name = "description"];    
+    bytes value = 3 [json_name = "value"]; 
+  }
+  repeated KeeperValue values = 4 [json_name = "values"];
+}
+message SaveRequest{
+  KeeperElement value = 1 [json_name = "value"];
+}
+message SaveResponse{
+  bool save_status = 1 [json_name = "save_status"];
+  string save_message = 2 [json_name = "save_message"];  
+}
+message LoadReques{
+  string title = 1 [json_name = "title"];
+}
+message LoadResponse{
+  KeeperElement value = 1 [json_name = "value"];
+}
 service GophKeeper { 
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc GeneratePassword(GeneratePasswordRequest) returns (GeneratePasswordResponse);
+  rpc Save(SaveRequest) returns (SaveResponse);
+  rpc Load(LoadReques) returns (LoadResponse);
 }
