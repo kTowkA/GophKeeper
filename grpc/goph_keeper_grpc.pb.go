@@ -34,7 +34,7 @@ type GophKeeperClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	GeneratePassword(ctx context.Context, in *GeneratePasswordRequest, opts ...grpc.CallOption) (*GeneratePasswordResponse, error)
 	Save(ctx context.Context, in *SaveRequest, opts ...grpc.CallOption) (*SaveResponse, error)
-	Load(ctx context.Context, in *LoadReques, opts ...grpc.CallOption) (*LoadResponse, error)
+	Load(ctx context.Context, in *LoadRequest, opts ...grpc.CallOption) (*LoadResponse, error)
 }
 
 type gophKeeperClient struct {
@@ -85,7 +85,7 @@ func (c *gophKeeperClient) Save(ctx context.Context, in *SaveRequest, opts ...gr
 	return out, nil
 }
 
-func (c *gophKeeperClient) Load(ctx context.Context, in *LoadReques, opts ...grpc.CallOption) (*LoadResponse, error) {
+func (c *gophKeeperClient) Load(ctx context.Context, in *LoadRequest, opts ...grpc.CallOption) (*LoadResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LoadResponse)
 	err := c.cc.Invoke(ctx, GophKeeper_Load_FullMethodName, in, out, cOpts...)
@@ -103,7 +103,7 @@ type GophKeeperServer interface {
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	GeneratePassword(context.Context, *GeneratePasswordRequest) (*GeneratePasswordResponse, error)
 	Save(context.Context, *SaveRequest) (*SaveResponse, error)
-	Load(context.Context, *LoadReques) (*LoadResponse, error)
+	Load(context.Context, *LoadRequest) (*LoadResponse, error)
 	mustEmbedUnimplementedGophKeeperServer()
 }
 
@@ -126,7 +126,7 @@ func (UnimplementedGophKeeperServer) GeneratePassword(context.Context, *Generate
 func (UnimplementedGophKeeperServer) Save(context.Context, *SaveRequest) (*SaveResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Save not implemented")
 }
-func (UnimplementedGophKeeperServer) Load(context.Context, *LoadReques) (*LoadResponse, error) {
+func (UnimplementedGophKeeperServer) Load(context.Context, *LoadRequest) (*LoadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Load not implemented")
 }
 func (UnimplementedGophKeeperServer) mustEmbedUnimplementedGophKeeperServer() {}
@@ -223,7 +223,7 @@ func _GophKeeper_Save_Handler(srv interface{}, ctx context.Context, dec func(int
 }
 
 func _GophKeeper_Load_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LoadReques)
+	in := new(LoadRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -235,7 +235,7 @@ func _GophKeeper_Load_Handler(srv interface{}, ctx context.Context, dec func(int
 		FullMethod: GophKeeper_Load_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GophKeeperServer).Load(ctx, req.(*LoadReques))
+		return srv.(GophKeeperServer).Load(ctx, req.(*LoadRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

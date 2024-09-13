@@ -45,7 +45,7 @@ message SaveResponse{
   bool save_status = 1 [json_name = "save_status"];
   string save_message = 2 [json_name = "save_message"];  
 }
-message LoadReques{
+message LoadRequest{
   string title = 1 [json_name = "title"];
 }
 message LoadResponse{
@@ -56,5 +56,5 @@ service GophKeeper {
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc GeneratePassword(GeneratePasswordRequest) returns (GeneratePasswordResponse);
   rpc Save(SaveRequest) returns (SaveResponse);
-  rpc Load(LoadReques) returns (LoadResponse);
+  rpc Load(LoadRequest) returns (LoadResponse);
 }

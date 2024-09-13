@@ -274,6 +274,72 @@ func (suite *ServerTest) TestSave() {
 		suite.Error(err, t.name)
 	}
 }
+func (suite *ServerTest) TestLoad() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	username := "user"
+	secret := ""
+	token, err := generateToken(username, secret)
+	suite.NoError(err)
+	validCtx := metadata.NewIncomingContext(ctx, metadata.New(map[string]string{TokenTitle: token}))
+	tests := []Test{
+		{
+			name:          "ошибка получения пользователя",
+			ctx:           ctx,
+			wantError:     true,
+			wantgRPCError: codes.Unauthenticated,
+			request:       &pb.LoadRequest{},
+		},
+		{
+			name:      "ошибка в БД",
+			ctx:       validCtx,
+			wantError: true,
+			request: &pb.LoadRequest{
+				Title: "111",
+			},
+			mock: func() {
+				suite.ms.On("Load", mock.Anything, model.StorageLoadRequest{
+					User:               username,
+					TitleKeeperElement: "111",
+				}).Return(model.StorageLoadResponse{}, errors.New("ошибка при запросе данных")).Once()
+			},
+		},
+		{
+			name:      "все хорошо",
+			ctx:       validCtx,
+			wantError: false,
+			request: &pb.LoadRequest{
+				Title: "111",
+			},
+			mock: func() {
+				suite.ms.On("Load", mock.Anything, model.StorageLoadRequest{
+					User:               username,
+					TitleKeeperElement: "111",
+				}).Return(model.StorageLoadResponse{}, nil).Once()
+			},
+		},
+	}
+	for _, t := range tests {
+		if t.mock != nil {
+			t.mock()
+		}
+		_, err := suite.gs.Load(t.ctx, (t.request).(*pb.LoadRequest))
+		if !t.wantError {
+			suite.NoError(err, t.name)
+			continue
+		}
+		if t.wantgRPCError > 0 {
+			if e, ok := status.FromError(err); ok {
+				suite.EqualValues(t.wantgRPCError, e.Code(), t.name)
+			} else {
+				suite.Fail("должна содержаться ошибка", t.name)
+			}
+			continue
+		}
+		suite.Error(err, t.name)
+	}
+}
 func TestAppSuite(t *testing.T) {
 	suite.Run(t, new(ServerTest))
 }
