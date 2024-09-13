@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -9,9 +10,7 @@ import (
 	pb "github.com/kTowkA/GophKeeper/grpc"
 	"github.com/kTowkA/GophKeeper/internal/config"
 	"github.com/kTowkA/GophKeeper/internal/storage"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 )
 
 const (
@@ -36,11 +35,11 @@ func (s *Server) Run(ctx context.Context) error {
 func usernameFromToken(ctx context.Context, secret string) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return "", status.Error(codes.Unauthenticated, "не найден контекст для проверки доступа")
+		return "", errors.New("не найден контекст для проверки доступа")
 	}
 	tokenCtx := md.Get(TokenTitle)
 	if len(tokenCtx) == 0 {
-		return "", status.Error(codes.Unauthenticated, "не найден токен в переданном контексте")
+		return "", errors.New("не найден токен в переданном контексте")
 	}
 	tokenString := tokenCtx[0]
 
@@ -57,7 +56,7 @@ func usernameFromToken(ctx context.Context, secret string) (string, error) {
 	}
 
 	if !token.Valid {
-		return "", fmt.Errorf("токен не прошел проверку")
+		return "", errors.New("токен не прошел проверку")
 	}
 	return claims.User, nil
 }

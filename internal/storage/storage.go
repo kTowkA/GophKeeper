@@ -7,6 +7,10 @@ import (
 )
 
 type Storager interface {
+	UserStorager
+	KeepStorager
+}
+type UserStorager interface {
 	Register(context.Context, model.StorageRegisterRequest) (model.StorageRegisterResponse, error)
 	PasswordHash(context.Context, model.StoragePasswordHashRequest) (model.StoragePasswordHashResponse, error)
 }

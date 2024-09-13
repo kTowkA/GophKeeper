@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -209,6 +210,69 @@ func (suite *ServerTest) TestGeneratePassword() {
 	suite.NoError(err)
 	suite.EqualValues(15, utf8.RuneCountInString(resp.Password))
 	suite.NoError(validatePassword(resp.Password))
+}
+
+func (suite *ServerTest) TestSave() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	username := "user"
+	secret := ""
+	token, err := generateToken(username, secret)
+	suite.NoError(err)
+	validCtx := metadata.NewIncomingContext(ctx, metadata.New(map[string]string{TokenTitle: token}))
+	tests := []Test{
+		{
+			name:          "ошибка получения пользователя",
+			ctx:           ctx,
+			wantError:     true,
+			wantgRPCError: codes.Unauthenticated,
+			request: &pb.SaveRequest{
+				Value: &pb.KeeperElement{},
+			},
+		},
+		{
+			name:      "ошибка в БД",
+			ctx:       validCtx,
+			wantError: true,
+			request: &pb.SaveRequest{
+				Value: &pb.KeeperElement{},
+			},
+			mock: func() {
+				suite.ms.On("Save", mock.Anything, mock.AnythingOfType("model.StorageSaveRequest")).Return(model.StorageSaveResponse{}, errors.New("ошибка при сохранении данных")).Once()
+			},
+		},
+		{
+			name: "все хорошо",
+			request: &pb.SaveRequest{
+				Value: &pb.KeeperElement{},
+			},
+			ctx:       validCtx,
+			wantError: false,
+			mock: func() {
+				suite.ms.On("Save", mock.Anything, mock.AnythingOfType("model.StorageSaveRequest")).Return(model.StorageSaveResponse{}, nil).Once()
+			},
+		},
+	}
+	for _, t := range tests {
+		if t.mock != nil {
+			t.mock()
+		}
+		_, err := suite.gs.Save(t.ctx, (t.request).(*pb.SaveRequest))
+		if !t.wantError {
+			suite.NoError(err, t.name)
+			continue
+		}
+		if t.wantgRPCError > 0 {
+			if e, ok := status.FromError(err); ok {
+				suite.EqualValues(t.wantgRPCError, e.Code(), t.name)
+			} else {
+				suite.Fail("должна содержаться ошибка", t.name)
+			}
+			continue
+		}
+		suite.Error(err, t.name)
+	}
 }
 func TestAppSuite(t *testing.T) {
 	suite.Run(t, new(ServerTest))

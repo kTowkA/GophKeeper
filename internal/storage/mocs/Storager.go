@@ -14,9 +14,37 @@ type Storager struct {
 	mock.Mock
 }
 
-// PasswordHash provides a mock function with given fields: ctx, r
-func (_m *Storager) PasswordHash(ctx context.Context, r model.StoragePasswordHashRequest) (model.StoragePasswordHashResponse, error) {
-	ret := _m.Called(ctx, r)
+// Load provides a mock function with given fields: _a0, _a1
+func (_m *Storager) Load(_a0 context.Context, _a1 model.StorageLoadRequest) (model.StorageLoadResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Load")
+	}
+
+	var r0 model.StorageLoadResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.StorageLoadRequest) (model.StorageLoadResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, model.StorageLoadRequest) model.StorageLoadResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(model.StorageLoadResponse)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, model.StorageLoadRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// PasswordHash provides a mock function with given fields: _a0, _a1
+func (_m *Storager) PasswordHash(_a0 context.Context, _a1 model.StoragePasswordHashRequest) (model.StoragePasswordHashResponse, error) {
+	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PasswordHash")
@@ -25,16 +53,16 @@ func (_m *Storager) PasswordHash(ctx context.Context, r model.StoragePasswordHas
 	var r0 model.StoragePasswordHashResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, model.StoragePasswordHashRequest) (model.StoragePasswordHashResponse, error)); ok {
-		return rf(ctx, r)
+		return rf(_a0, _a1)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, model.StoragePasswordHashRequest) model.StoragePasswordHashResponse); ok {
-		r0 = rf(ctx, r)
+		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(model.StoragePasswordHashResponse)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, model.StoragePasswordHashRequest) error); ok {
-		r1 = rf(ctx, r)
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -42,9 +70,9 @@ func (_m *Storager) PasswordHash(ctx context.Context, r model.StoragePasswordHas
 	return r0, r1
 }
 
-// Register provides a mock function with given fields: ctx, r
-func (_m *Storager) Register(ctx context.Context, r model.StorageRegisterRequest) (model.StorageRegisterResponse, error) {
-	ret := _m.Called(ctx, r)
+// Register provides a mock function with given fields: _a0, _a1
+func (_m *Storager) Register(_a0 context.Context, _a1 model.StorageRegisterRequest) (model.StorageRegisterResponse, error) {
+	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Register")
@@ -53,16 +81,44 @@ func (_m *Storager) Register(ctx context.Context, r model.StorageRegisterRequest
 	var r0 model.StorageRegisterResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, model.StorageRegisterRequest) (model.StorageRegisterResponse, error)); ok {
-		return rf(ctx, r)
+		return rf(_a0, _a1)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, model.StorageRegisterRequest) model.StorageRegisterResponse); ok {
-		r0 = rf(ctx, r)
+		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(model.StorageRegisterResponse)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, model.StorageRegisterRequest) error); ok {
-		r1 = rf(ctx, r)
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Save provides a mock function with given fields: _a0, _a1
+func (_m *Storager) Save(_a0 context.Context, _a1 model.StorageSaveRequest) (model.StorageSaveResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Save")
+	}
+
+	var r0 model.StorageSaveResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.StorageSaveRequest) (model.StorageSaveResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, model.StorageSaveRequest) model.StorageSaveResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(model.StorageSaveResponse)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, model.StorageSaveRequest) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
