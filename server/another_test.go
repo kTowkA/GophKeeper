@@ -2,6 +2,7 @@ package server
 
 import (
 	"testing"
+	"unicode/utf8"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -83,5 +84,19 @@ func TestGenerateToken(t *testing.T) {
 	login := "login"
 	secret := "secret"
 	_, err := generateToken(login, secret)
+	assert.NoError(t, err)
+}
+
+func TestGeneratePassword(t *testing.T) {
+	pwd, err := generatePassword(13)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 13, utf8.RuneCountInString(pwd))
+	err = validatePassword(pwd)
+	assert.NoError(t, err)
+
+	pwd, err = generatePassword(16)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 16, utf8.RuneCountInString(pwd))
+	err = validatePassword(pwd)
 	assert.NoError(t, err)
 }

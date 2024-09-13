@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	pb "github.com/kTowkA/GophKeeper/grpc"
 	"github.com/kTowkA/GophKeeper/internal/model"
@@ -198,6 +199,16 @@ func (suite *ServerTest) TestLogin() {
 		}
 		suite.Error(err, t.name)
 	}
+}
+
+func (suite *ServerTest) TestGeneratePassword() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	resp, err := suite.gs.GeneratePassword(ctx, &pb.GeneratePasswordRequest{Length: 15})
+	suite.NoError(err)
+	suite.EqualValues(15, utf8.RuneCountInString(resp.Password))
+	suite.NoError(validatePassword(resp.Password))
 }
 func TestAppSuite(t *testing.T) {
 	suite.Run(t, new(ServerTest))
