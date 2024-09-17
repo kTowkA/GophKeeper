@@ -23,5 +23,7 @@ func (cs *Config) LogLevel() slog.Level {
 }
 
 func LoadConfig() (*Config, error) {
-	return nil, nil
+	return &Config{
+		address: ":3200",
+	}, nil
 }
