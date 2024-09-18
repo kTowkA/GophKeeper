@@ -121,6 +121,75 @@ func (suite *PostgresTest) TestPassword() {
 	})
 	suite.ErrorIs(err, storage.ErrLoginIsNotExist)
 }
+
+func (suite *PostgresTest) TestSave() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// нет пользователя
+	_, err := suite.pstorage.Save(ctx, model.StorageSaveRequest{User: "none"})
+	suite.ErrorIs(err, storage.ErrLoginIsNotExist)
+
+	user := "save_user"
+	_, err = suite.pstorage.Register(ctx, model.StorageRegisterRequest{Login: user, Password: user})
+	suite.NoError(err)
+
+	// все хорошо
+	_, err = suite.pstorage.Save(ctx,
+		model.StorageSaveRequest{
+			User: user,
+			Value: model.KeeperElement{
+				Title: "title1",
+				Values: []model.KeeperValue{
+					{
+						Title:       "1",
+						Description: "11",
+						Value:       []byte("111"),
+					},
+					{
+						Title:       "2",
+						Description: "22",
+						Value:       []byte("222"),
+					},
+				},
+			},
+		})
+	suite.NoError(err)
+
+	// повторяется пользователь и заголовок элемента
+	_, err = suite.pstorage.Save(ctx,
+		model.StorageSaveRequest{
+			User: user,
+			Value: model.KeeperElement{
+				Title:  "title1",
+				Values: []model.KeeperValue{},
+			},
+		})
+
+	suite.ErrorIs(err, storage.ErrKeepElementIsExist)
+
+	// повторяется элемент и заголовок значения
+	_, err = suite.pstorage.Save(ctx,
+		model.StorageSaveRequest{
+			User: user,
+			Value: model.KeeperElement{
+				Title: "title2",
+				Values: []model.KeeperValue{
+					{
+						Title:       "1",
+						Description: "11",
+						Value:       []byte("111"),
+					},
+					{
+						Title:       "1",
+						Description: "22",
+						Value:       []byte("222"),
+					},
+				},
+			},
+		})
+	suite.Error(err)
+}
 func TestSuite(t *testing.T) {
 	suite.Run(t, new(PostgresTest))
 }
