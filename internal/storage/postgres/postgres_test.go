@@ -190,6 +190,46 @@ func (suite *PostgresTest) TestSave() {
 		})
 	suite.Error(err)
 }
+
+func (suite *PostgresTest) TestLoad() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	user := "load_user"
+	_, err := suite.pstorage.Register(ctx, model.StorageRegisterRequest{Login: user, Password: user})
+	suite.NoError(err)
+
+	// нет элемента
+	_, err = suite.pstorage.Load(ctx, model.StorageLoadRequest{User: user, TitleKeeperElement: "none"})
+	suite.ErrorIs(err, storage.ErrKeepElementNotExist)
+
+	// тут сохраняем новый элемент и все хорошо
+	ke := model.KeeperElement{
+		Title: "title1",
+		Values: []model.KeeperValue{
+			{
+				Title:       "1",
+				Description: "11",
+				Value:       []byte("111"),
+			},
+			{
+				Title:       "2",
+				Description: "22",
+				Value:       []byte("222"),
+			},
+		},
+	}
+	_, err = suite.pstorage.Save(ctx,
+		model.StorageSaveRequest{
+			User:  user,
+			Value: ke,
+		})
+	suite.NoError(err)
+
+	resp, err := suite.pstorage.Load(ctx, model.StorageLoadRequest{User: user, TitleKeeperElement: "title1"})
+	suite.NoError(err)
+	suite.EqualValues(ke, resp.TitleKeeperElement)
+}
 func TestSuite(t *testing.T) {
 	suite.Run(t, new(PostgresTest))
 }

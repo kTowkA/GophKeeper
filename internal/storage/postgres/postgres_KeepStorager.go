@@ -43,8 +43,63 @@ func (p *Postgres) Save(ctx context.Context, r model.StorageSaveRequest) (model.
 	err = tx.Commit(ctx)
 	return model.StorageSaveResponse{}, err
 }
-func (p *Postgres) Load(context.Context, model.StorageLoadRequest) (model.StorageLoadResponse, error) {
-	return model.StorageLoadResponse{}, nil
+func (p *Postgres) Load(ctx context.Context, r model.StorageLoadRequest) (model.StorageLoadResponse, error) {
+	login := strings.ToLower(r.User)
+	resp := model.StorageLoadResponse{
+		TitleKeeperElement: model.KeeperElement{
+			Values: make([]model.KeeperValue, 0, 1),
+		},
+	}
+	elementID := uuid.UUID{}
+	err := p.Pool.QueryRow(
+		ctx,
+		`
+		SELECT 
+			ke.element_id, ke.title, ke.description
+		FROM 
+			users AS u,keep_element AS ke
+		WHERE 
+				u.login=$1
+			AND
+				u.user_id = ke.user_id
+			AND
+				ke.title=$2
+		`,
+		login,
+		r.TitleKeeperElement,
+	).Scan(
+		&elementID,
+		&resp.TitleKeeperElement.Title,
+		&resp.TitleKeeperElement.Description,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return model.StorageLoadResponse{}, storage.ErrKeepElementNotExist
+	}
+	if err != nil {
+		return model.StorageLoadResponse{}, err
+	}
+	rows, err := p.Pool.Query(
+		ctx,
+		"SELECT title,description,value FROM keep_value WHERE element_id=$1",
+		elementID,
+	)
+	if err != nil && errors.Is(err, pgx.ErrNoRows) {
+		return model.StorageLoadResponse{}, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		value := model.KeeperValue{}
+		err = rows.Scan(
+			&value.Title,
+			&value.Description,
+			&value.Value,
+		)
+		if err != nil {
+			return model.StorageLoadResponse{}, err
+		}
+		resp.TitleKeeperElement.Values = append(resp.TitleKeeperElement.Values, value)
+	}
+	return resp, nil
 }
 
 func saveElement(ctx context.Context, tx pgx.Tx, userID uuid.UUID, element model.KeeperElement) (uuid.UUID, error) {
