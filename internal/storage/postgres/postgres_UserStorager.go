@@ -50,7 +50,7 @@ func (p *Postgres) PasswordHash(ctx context.Context, r model.StoragePasswordHash
 		login,
 	).Scan(&passwordHash)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return model.StoragePasswordHashResponse{}, storage.ErrLoginIsNotExist
+		return model.StoragePasswordHashResponse{}, storage.ErrUserIsNotExist
 	}
 	if err != nil {
 		return model.StoragePasswordHashResponse{}, err
@@ -58,4 +58,20 @@ func (p *Postgres) PasswordHash(ctx context.Context, r model.StoragePasswordHash
 	return model.StoragePasswordHashResponse{
 		PasswordHash: passwordHash,
 	}, nil
+}
+func (p *Postgres) userID(ctx context.Context, login string) (uuid.UUID, error) {
+	login = strings.ToLower(login)
+	var userID uuid.UUID
+	err := p.Pool.QueryRow(
+		ctx,
+		"SELECT user_id FROM users WHERE login=$1",
+		login,
+	).Scan(&userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return uuid.UUID{}, storage.ErrUserIsNotExist
+	}
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+	return userID, nil
 }

@@ -15,6 +15,10 @@ func Connect(ctx context.Context, pdsn string) (*Postgres, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = p.Ping(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return &Postgres{p}, nil
 }
 func (p *Postgres) Close() {

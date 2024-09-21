@@ -27,34 +27,60 @@ message LoginResponse{
   string login_message = 2 [json_name = "login_message"];
   string token = 3 [json_name = "token"];
 }
-message KeeperElement{
+message KeeperFolder{
   string title = 1 [json_name = "title"];
   string description = 2 [json_name = "description"];
   string type = 3 [json_name = "type"];
-  message KeeperValue{
-    string title = 1 [json_name = "title"];
-    string description = 2 [json_name = "description"];    
-    bytes value = 3 [json_name = "value"]; 
-  }
   repeated KeeperValue values = 4 [json_name = "values"];
 }
+message CreateFolderRequest{
+  string title = 1 [json_name = "title"];
+  string description = 2 [json_name = "description"];
+}
+message CreateFolderResponse{
+  bool create_folder_status = 1 [json_name = "create_folder_status"];
+  string create_folder_message = 2 [json_name = "create_folder_message"];
+  string create_folder_uuid = 3 [json_name = "create_folder_uuid"];
+}
+message FoldersRequest{
+}
+message FoldersResponse{
+  repeated string folders = 1 [json_name = "folders"];
+}
+message ValuesInFolderRequest{
+  string folder = 1 [json_name = "folder"];
+}
+message ValuesInFolderResponse{
+  repeated string values = 1 [json_name = "values"];
+}
+message KeeperValue{
+  string title = 1 [json_name = "title"];
+  string description = 2 [json_name = "description"];    
+  bytes value = 3 [json_name = "value"]; 
+}
 message SaveRequest{
-  KeeperElement value = 1 [json_name = "value"];
+  string folder = 1 [json_name = "folder"];
+  KeeperValue value = 2 [json_name = "value"];
 }
 message SaveResponse{
   bool save_status = 1 [json_name = "save_status"];
   string save_message = 2 [json_name = "save_message"];  
+  string save_value_uuid = 3 [json_name = "save_value_uuid"];
 }
 message LoadRequest{
-  string title = 1 [json_name = "title"];
+  string folder = 1 [json_name = "folder"];
+  string title = 2 [json_name = "title"];
 }
 message LoadResponse{
-  KeeperElement value = 1 [json_name = "value"];
+  KeeperValue value = 1 [json_name = "value"];
 }
 service GophKeeper { 
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc GeneratePassword(GeneratePasswordRequest) returns (GeneratePasswordResponse);
+  rpc CreateFolder(CreateFolderRequest) returns (CreateFolderResponse);
+  rpc Folders(FoldersRequest) returns (FoldersResponse);
+  rpc Values(ValuesInFolderRequest) returns (ValuesInFolderResponse);
   rpc Save(SaveRequest) returns (SaveResponse);
   rpc Load(LoadRequest) returns (LoadResponse);
 }

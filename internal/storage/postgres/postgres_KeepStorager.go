@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,137 +12,215 @@ import (
 )
 
 func (p *Postgres) Save(ctx context.Context, r model.StorageSaveRequest) (model.StorageSaveResponse, error) {
-	var userID uuid.UUID
-	login := strings.ToLower(r.User)
-	err := p.Pool.QueryRow(
-		ctx,
-		"SELECT user_id FROM users WHERE login=$1",
-		login,
-	).Scan(&userID)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return model.StorageSaveResponse{}, storage.ErrLoginIsNotExist
-	}
+	userID, err := p.userID(ctx, r.User)
 	if err != nil {
 		return model.StorageSaveResponse{}, err
 	}
+	folderID, err := p.folderID(ctx, userID, r.Folder)
+	if err != nil {
+		return model.StorageSaveResponse{}, err
+	}
+	err = p.Pool.QueryRow(
+		ctx,
+		"SELECT value_id FROM keep_value WHERE folder_id=$1 AND title=$2",
+		folderID,
+		r.Value.Title,
+	).Scan(nil)
+	if err == nil {
+		return model.StorageSaveResponse{}, storage.ErrKeepValueIsExist
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return model.StorageSaveResponse{}, err
+	}
+	valueID := uuid.New()
 	tx, err := p.Pool.Begin(ctx)
 	if err != nil {
 		return model.StorageSaveResponse{}, err
 	}
-	elementID, err := saveElement(ctx, tx, userID, r.Value)
+	_, err = tx.Exec(
+		ctx,
+		`
+		INSERT INTO keep_value(value_id,folder_id,title,description,value,create_at) VALUES($1,$2,$3,$4,$5,$6);
+		`,
+		valueID,
+		folderID,
+		r.Value.Title,
+		r.Value.Description,
+		r.Value.Value,
+		time.Now(),
+	)
 	if err != nil {
-		_ = tx.Rollback(ctx)
 		return model.StorageSaveResponse{}, err
 	}
-	_, err = saveValues(ctx, tx, elementID, r.Value.Values)
+	_, err = tx.Exec(
+		ctx,
+		`
+		UPDATE keep_folder SET update_at=$2 WHERE folder_id=$1;
+		`,
+		folderID,
+		time.Now(),
+	)
 	if err != nil {
 		_ = tx.Rollback(ctx)
 		return model.StorageSaveResponse{}, err
 	}
 	err = tx.Commit(ctx)
-	return model.StorageSaveResponse{}, err
+	return model.StorageSaveResponse{ValueID: valueID}, err
 }
 func (p *Postgres) Load(ctx context.Context, r model.StorageLoadRequest) (model.StorageLoadResponse, error) {
-	login := strings.ToLower(r.User)
-	resp := model.StorageLoadResponse{
-		TitleKeeperElement: model.KeeperElement{
-			Values: make([]model.KeeperValue, 0, 1),
-		},
+	userID, err := p.userID(ctx, r.User)
+	if err != nil {
+		return model.StorageLoadResponse{}, err
 	}
-	elementID := uuid.UUID{}
-	err := p.Pool.QueryRow(
+	folderID, err := p.folderID(ctx, userID, r.Folder)
+	if err != nil {
+		return model.StorageLoadResponse{}, err
+	}
+	var value model.KeeperValue
+	err = p.Pool.QueryRow(
 		ctx,
 		`
 		SELECT 
-			ke.element_id, ke.title, ke.description
+			title,description,value,create_at
 		FROM 
-			users AS u,keep_element AS ke
+			keep_value
 		WHERE 
-				u.login=$1
-			AND
-				u.user_id = ke.user_id
-			AND
-				ke.title=$2
+			folder_id=$1 AND title=$2
 		`,
-		login,
-		r.TitleKeeperElement,
+		folderID,
+		r.Title,
 	).Scan(
-		&elementID,
-		&resp.TitleKeeperElement.Title,
-		&resp.TitleKeeperElement.Description,
+		&value.Title,
+		&value.Description,
+		&value.Value,
+		&value.CreateTime,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return model.StorageLoadResponse{}, storage.ErrKeepElementNotExist
+		return model.StorageLoadResponse{}, storage.ErrKeepValueNotExist
 	}
 	if err != nil {
 		return model.StorageLoadResponse{}, err
 	}
-	rows, err := p.Pool.Query(
-		ctx,
-		"SELECT title,description,value FROM keep_value WHERE element_id=$1",
-		elementID,
-	)
-	if err != nil && errors.Is(err, pgx.ErrNoRows) {
-		return model.StorageLoadResponse{}, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		value := model.KeeperValue{}
-		err = rows.Scan(
-			&value.Title,
-			&value.Description,
-			&value.Value,
-		)
-		if err != nil {
-			return model.StorageLoadResponse{}, err
-		}
-		resp.TitleKeeperElement.Values = append(resp.TitleKeeperElement.Values, value)
-	}
-	return resp, nil
+	return model.StorageLoadResponse{Value: value}, nil
 }
-
-func saveElement(ctx context.Context, tx pgx.Tx, userID uuid.UUID, element model.KeeperElement) (uuid.UUID, error) {
-	err := tx.QueryRow(
+func (p *Postgres) CreateFolder(ctx context.Context, r model.StorageCreateFolderRequest) (model.StorageCreateFolderResponse, error) {
+	userID, err := p.userID(ctx, r.User)
+	if err != nil {
+		return model.StorageCreateFolderResponse{}, err
+	}
+	err = p.Pool.QueryRow(
 		ctx,
-		"SELECT element_id FROM keep_element WHERE user_id=$1 AND title=$2",
+		"SELECT folder_id FROM keep_folder WHERE user_id=$1 AND title=$2",
 		userID,
-		element.Title,
+		r.Folder,
 	).Scan(nil)
 	if err == nil {
-		return uuid.UUID{}, storage.ErrKeepElementIsExist
+		return model.StorageCreateFolderResponse{}, storage.ErrKeepFolderIsExist
 	}
 	if !errors.Is(err, pgx.ErrNoRows) {
-		return uuid.UUID{}, err
+		return model.StorageCreateFolderResponse{}, err
 	}
-	elementID := uuid.New()
-	_, err = tx.Exec(
+	folderID := uuid.New()
+	_, err = p.Pool.Exec(
 		ctx,
-		"INSERT INTO keep_element (element_id,user_id,title,description,adding_at) VALUES($1,$2,$3,$4,$5) ",
-		elementID,
+		"INSERT INTO keep_folder(folder_id,user_id,title,description,create_at,update_at) VALUES($1,$2,$3,$4,$5,$6) ",
+		folderID,
 		userID,
-		element.Title,
-		element.Description,
+		r.Folder,
+		r.Description,
+		time.Now(),
 		time.Now(),
 	)
-	return elementID, err
+	return model.StorageCreateFolderResponse{FolderID: folderID}, err
 }
-func saveValues(ctx context.Context, tx pgx.Tx, elementID uuid.UUID, values []model.KeeperValue) ([]uuid.UUID, error) {
-	b := pgx.Batch{}
-	valuesIDs := make([]uuid.UUID, 0, len(values))
-	for _, v := range values {
-		valueID := uuid.New()
-		valuesIDs = append(valuesIDs, valueID)
-		b.Queue(
-			"INSERT INTO keep_value(value_id,element_id,title,description,value,adding_at) VALUES($1,$2,$3,$4,$5,$6)",
-			valueID,
-			elementID,
-			v.Title,
-			v.Description,
-			v.Value,
-			time.Now(),
-		)
+func (p *Postgres) Folders(ctx context.Context, r model.StorageFoldersRequest) (model.StorageFoldersResponse, error) {
+	userID, err := p.userID(ctx, r.User)
+	if err != nil {
+		return model.StorageFoldersResponse{}, err
 	}
-	br := tx.SendBatch(ctx, &b)
-	err := br.Close()
-	return valuesIDs, err
+	rows, err := p.Pool.Query(
+		ctx,
+		"SELECT title FROM keep_folder WHERE user_id=$1",
+		userID,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return model.StorageFoldersResponse{}, storage.ErrKeepFolderNotExist
+	}
+	if err != nil {
+		return model.StorageFoldersResponse{}, err
+	}
+	defer rows.Close()
+	foldes := make([]string, 0, 1)
+	for rows.Next() {
+		folder := ""
+		err = rows.Scan(&folder)
+		if err != nil {
+			return model.StorageFoldersResponse{}, err
+		}
+		foldes = append(foldes, folder)
+	}
+	if len(foldes) == 0 {
+		return model.StorageFoldersResponse{}, storage.ErrKeepFolderNotExist
+	}
+	return model.StorageFoldersResponse{Folders: foldes}, nil
+}
+func (p *Postgres) Values(ctx context.Context, r model.StorageValuesRequest) (model.StorageValuesResponse, error) {
+	userID, err := p.userID(ctx, r.User)
+	if err != nil {
+		return model.StorageValuesResponse{}, err
+	}
+	folderID, err := p.folderID(ctx, userID, r.Folder)
+	if err != nil {
+		return model.StorageValuesResponse{}, err
+	}
+	rows, err := p.Pool.Query(
+		ctx,
+		`
+		SELECT 
+			title
+		FROM 
+			keep_value
+		WHERE 
+			folder_id=$1
+		`,
+		folderID,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return model.StorageValuesResponse{}, storage.ErrKeepValueNotExist
+	}
+	if err != nil {
+		return model.StorageValuesResponse{}, err
+	}
+	defer rows.Close()
+	values := make([]string, 0, 1)
+	for rows.Next() {
+		value := ""
+		err = rows.Scan(
+			&value,
+		)
+		if err != nil {
+			return model.StorageValuesResponse{}, err
+		}
+		values = append(values, value)
+	}
+	if len(values) == 0 {
+		return model.StorageValuesResponse{}, storage.ErrKeepValueNotExist
+	}
+	return model.StorageValuesResponse{Values: values}, nil
+}
+func (p *Postgres) folderID(ctx context.Context, userID uuid.UUID, folder string) (uuid.UUID, error) {
+	var folderID uuid.UUID
+	err := p.Pool.QueryRow(
+		ctx,
+		"SELECT folder_id FROM keep_folder WHERE user_id=$1 AND title=$2",
+		userID,
+		folder,
+	).Scan(&folderID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return uuid.UUID{}, storage.ErrKeepFolderNotExist
+	}
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+	return userID, nil
 }

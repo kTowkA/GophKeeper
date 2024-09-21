@@ -1,20 +1,23 @@
 package client
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/kTowkA/GophKeeper/grpc"
 )
 
 type login struct {
-	gophKeeperState *Gophkeeper
-	textInput       textinput.Model
-	username        string
-	password        string
+	service   *Gophkeeper
+	textInput textinput.Model
+	username  string
+	password  string
+	errorMsg  error
 }
 
-func initialModelLogin(state *Gophkeeper) login {
+func initialModelLogin(service *Gophkeeper) login {
 	ti := textinput.New()
 	ti.Placeholder = "ваш логин"
 	ti.Focus()
@@ -23,6 +26,7 @@ func initialModelLogin(state *Gophkeeper) login {
 
 	return login{
 		textInput: ti,
+		service:   service,
 	}
 }
 
@@ -35,14 +39,12 @@ func (m login) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		// Cool, what was the actual key pressed?
 		switch msg.String() {
-		// These keys should exit the program.
 		case "ctrl+c":
 			return m, tea.Quit
 		case "esc":
 			if m.username == "" || (m.username != "" && m.password != "") {
-				return Initial(m.gophKeeperState), nil
+				return Initial(m.service), nil
 			}
 			m.username = ""
 			m.password = ""
@@ -52,10 +54,15 @@ func (m login) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.username = m.textInput.Value()
 				m.textInput.SetValue("")
 				m.textInput.Placeholder = "ваш пароль"
-			} else if m.password == "" {
-				m.password = m.textInput.Value()
 			} else {
-
+				m.password = m.textInput.Value()
+				ctx, cancel := context.WithTimeout(context.Background(), waitTime)
+				defer cancel()
+				resp, err := m.service.gClient.Login(ctx, &grpc.LoginRequest{Login: m.username, Password: m.password})
+				m.errorMsg = err
+				if err == nil {
+					m.service.token = resp.Token
+				}
 			}
 		}
 	}
@@ -64,19 +71,29 @@ func (m login) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m login) View() string {
+	if m.errorMsg != nil {
+		defer func() {
+			m.errorMsg = nil
+		}()
+		return fmt.Sprintf(
+			"Произошла ошибка \n\n%s\n\n%s",
+			m.errorMsg,
+			modelMessageEscOrQuit,
+		) + "\n"
+	}
 	if m.username == "" {
 		return fmt.Sprintf(
 			"Введите имя пользователя \n\n%s\n\n%s",
 			m.textInput.View(),
-			"(Нажмите Esc для возврата или ctrl+c для выхода)",
+			modelMessageEscOrQuit,
 		) + "\n"
 	}
 	if m.password == "" {
 		return fmt.Sprintf(
 			"Введите пароль \n\n%s\n\n%s",
 			m.textInput.View(),
-			"(Нажмите Esc для возврата или ctrl+c для выхода)",
+			modelMessageEscOrQuit,
 		) + "\n"
 	}
-	return fmt.Sprintf("Вы успешно создали аккаунт с именем \"%s\"\n\n(Нажмите Esc для возврата или ctrl+c для выхода)\n", m.username)
+	return fmt.Sprintf("Вы успешно вошли под именем \"%s\"\n\n%s\n", m.username, modelMessageEscOrQuit)
 }

@@ -7,43 +7,46 @@ import (
 )
 
 type modelMain struct {
-	gophKeeperState *Gophkeeper
-	choices         []choice
-	cursor          int
+	service   *Gophkeeper
+	choices   []choice
+	cursor    int
+	viewCount int
 }
 
 type choice struct {
-	value    string
-	all      bool
-	logged   bool
-	unLogged bool
-	model    tea.Model
+	value            string
+	viewOnlyLoggin   bool
+	viewOnlyUnLoggin bool
+	model            tea.Model
 }
 
-func Initial(state *Gophkeeper) modelMain {
+func Initial(service *Gophkeeper) modelMain {
 	return modelMain{
 		choices: []choice{
 			{
-				value:    "Авторизация",
-				unLogged: true,
-				model:    initialModelLogin(state),
+				value:            "Авторизация",
+				viewOnlyUnLoggin: true,
+				model:            initialModelLogin(service),
 			},
 			{
-				value:    "Регистрация",
-				unLogged: true,
-				model:    initialModelRegister(state),
+				value:            "Регистрация",
+				viewOnlyUnLoggin: true,
+				model:            initialModelRegister(service),
 			},
 			{
 				value: "Генерация одноразовых паролей",
-				all:   true,
-				model: initialModelGeneratePassword(state),
+				model: initialModelGeneratePassword(service),
 			},
 			{
-				value:  "Сохранить данные",
-				logged: true,
+				value:          "Сохранение данных",
+				viewOnlyLoggin: true,
+			},
+			{
+				value:          "Просмотр сохраненных данных",
+				viewOnlyLoggin: true,
 			},
 		},
-		gophKeeperState: state,
+		service: service,
 	}
 }
 func (m modelMain) Init() tea.Cmd {
@@ -58,8 +61,11 @@ func (m modelMain) View() string {
 		if m.cursor == i {
 			cursor = ">"
 		}
-
-		s += fmt.Sprintf("%s %s\n", cursor, choice.value)
+		if (choice.viewOnlyLoggin && m.service.IsLogged()) ||
+			(choice.viewOnlyUnLoggin && !m.service.IsLogged()) ||
+			(!choice.viewOnlyUnLoggin && !choice.viewOnlyLoggin) {
+			s += fmt.Sprintf("%s %s\n", cursor, choice.value)
+		}
 	}
 
 	s += "\nНажмите q или ctrl+c для выхода.\n"

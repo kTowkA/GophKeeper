@@ -22,6 +22,9 @@ const (
 	GophKeeper_Register_FullMethodName         = "/gophkeeper.GophKeeper/Register"
 	GophKeeper_Login_FullMethodName            = "/gophkeeper.GophKeeper/Login"
 	GophKeeper_GeneratePassword_FullMethodName = "/gophkeeper.GophKeeper/GeneratePassword"
+	GophKeeper_CreateFolder_FullMethodName     = "/gophkeeper.GophKeeper/CreateFolder"
+	GophKeeper_Folders_FullMethodName          = "/gophkeeper.GophKeeper/Folders"
+	GophKeeper_Values_FullMethodName           = "/gophkeeper.GophKeeper/Values"
 	GophKeeper_Save_FullMethodName             = "/gophkeeper.GophKeeper/Save"
 	GophKeeper_Load_FullMethodName             = "/gophkeeper.GophKeeper/Load"
 )
@@ -33,6 +36,9 @@ type GophKeeperClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	GeneratePassword(ctx context.Context, in *GeneratePasswordRequest, opts ...grpc.CallOption) (*GeneratePasswordResponse, error)
+	CreateFolder(ctx context.Context, in *CreateFolderRequest, opts ...grpc.CallOption) (*CreateFolderResponse, error)
+	Folders(ctx context.Context, in *FoldersRequest, opts ...grpc.CallOption) (*FoldersResponse, error)
+	Values(ctx context.Context, in *ValuesInFolderRequest, opts ...grpc.CallOption) (*ValuesInFolderResponse, error)
 	Save(ctx context.Context, in *SaveRequest, opts ...grpc.CallOption) (*SaveResponse, error)
 	Load(ctx context.Context, in *LoadRequest, opts ...grpc.CallOption) (*LoadResponse, error)
 }
@@ -75,6 +81,36 @@ func (c *gophKeeperClient) GeneratePassword(ctx context.Context, in *GeneratePas
 	return out, nil
 }
 
+func (c *gophKeeperClient) CreateFolder(ctx context.Context, in *CreateFolderRequest, opts ...grpc.CallOption) (*CreateFolderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateFolderResponse)
+	err := c.cc.Invoke(ctx, GophKeeper_CreateFolder_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gophKeeperClient) Folders(ctx context.Context, in *FoldersRequest, opts ...grpc.CallOption) (*FoldersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FoldersResponse)
+	err := c.cc.Invoke(ctx, GophKeeper_Folders_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gophKeeperClient) Values(ctx context.Context, in *ValuesInFolderRequest, opts ...grpc.CallOption) (*ValuesInFolderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ValuesInFolderResponse)
+	err := c.cc.Invoke(ctx, GophKeeper_Values_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *gophKeeperClient) Save(ctx context.Context, in *SaveRequest, opts ...grpc.CallOption) (*SaveResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SaveResponse)
@@ -102,6 +138,9 @@ type GophKeeperServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	GeneratePassword(context.Context, *GeneratePasswordRequest) (*GeneratePasswordResponse, error)
+	CreateFolder(context.Context, *CreateFolderRequest) (*CreateFolderResponse, error)
+	Folders(context.Context, *FoldersRequest) (*FoldersResponse, error)
+	Values(context.Context, *ValuesInFolderRequest) (*ValuesInFolderResponse, error)
 	Save(context.Context, *SaveRequest) (*SaveResponse, error)
 	Load(context.Context, *LoadRequest) (*LoadResponse, error)
 	mustEmbedUnimplementedGophKeeperServer()
@@ -122,6 +161,15 @@ func (UnimplementedGophKeeperServer) Login(context.Context, *LoginRequest) (*Log
 }
 func (UnimplementedGophKeeperServer) GeneratePassword(context.Context, *GeneratePasswordRequest) (*GeneratePasswordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GeneratePassword not implemented")
+}
+func (UnimplementedGophKeeperServer) CreateFolder(context.Context, *CreateFolderRequest) (*CreateFolderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateFolder not implemented")
+}
+func (UnimplementedGophKeeperServer) Folders(context.Context, *FoldersRequest) (*FoldersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Folders not implemented")
+}
+func (UnimplementedGophKeeperServer) Values(context.Context, *ValuesInFolderRequest) (*ValuesInFolderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Values not implemented")
 }
 func (UnimplementedGophKeeperServer) Save(context.Context, *SaveRequest) (*SaveResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Save not implemented")
@@ -204,6 +252,60 @@ func _GophKeeper_GeneratePassword_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GophKeeper_CreateFolder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateFolderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GophKeeperServer).CreateFolder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GophKeeper_CreateFolder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GophKeeperServer).CreateFolder(ctx, req.(*CreateFolderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GophKeeper_Folders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FoldersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GophKeeperServer).Folders(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GophKeeper_Folders_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GophKeeperServer).Folders(ctx, req.(*FoldersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GophKeeper_Values_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValuesInFolderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GophKeeperServer).Values(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GophKeeper_Values_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GophKeeperServer).Values(ctx, req.(*ValuesInFolderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _GophKeeper_Save_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SaveRequest)
 	if err := dec(in); err != nil {
@@ -258,6 +360,18 @@ var GophKeeper_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GeneratePassword",
 			Handler:    _GophKeeper_GeneratePassword_Handler,
+		},
+		{
+			MethodName: "CreateFolder",
+			Handler:    _GophKeeper_CreateFolder_Handler,
+		},
+		{
+			MethodName: "Folders",
+			Handler:    _GophKeeper_Folders_Handler,
+		},
+		{
+			MethodName: "Values",
+			Handler:    _GophKeeper_Values_Handler,
 		},
 		{
 			MethodName: "Save",

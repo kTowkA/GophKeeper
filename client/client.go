@@ -44,11 +44,11 @@ func Run(ctx context.Context, cfg config.Config) error {
 
 	gClient := pb.NewGophKeeperClient(conn)
 
-	state := &Gophkeeper{
+	service := &Gophkeeper{
 		gClient: gClient,
 	}
 
-	p := tea.NewProgram(Initial(state))
+	p := tea.NewProgram(Initial(service))
 	if _, err := p.Run(); err != nil {
 		return err
 	}

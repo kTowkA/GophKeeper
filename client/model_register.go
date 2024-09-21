@@ -1,21 +1,24 @@
 package client
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/kTowkA/GophKeeper/grpc"
 )
 
 type register struct {
-	gophKeeperState *Gophkeeper
+	service *Gophkeeper
 
 	textInput textinput.Model
 	username  string
 	password  string
+	errorMsg  error
 }
 
-func initialModelRegister(state *Gophkeeper) register {
+func initialModelRegister(service *Gophkeeper) register {
 	ti := textinput.New()
 	ti.Placeholder = "Ваш логин"
 	ti.Focus()
@@ -23,8 +26,8 @@ func initialModelRegister(state *Gophkeeper) register {
 	ti.Width = 30
 
 	return register{
-		textInput:       ti,
-		gophKeeperState: state,
+		textInput: ti,
+		service:   service,
 	}
 }
 
@@ -42,7 +45,7 @@ func (m register) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "esc":
 			if m.username == "" || (m.username != "" && m.password != "") {
-				return Initial(m.gophKeeperState), nil
+				return Initial(m.service), nil
 			}
 
 			m.username = ""
@@ -55,6 +58,10 @@ func (m register) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.textInput.SetValue("")
 			} else {
 				m.password = m.textInput.Value()
+				ctx, cancel := context.WithTimeout(context.Background(), waitTime)
+				defer cancel()
+				_, err := m.service.gClient.Register(ctx, &grpc.RegisterRequest{Login: m.username, Password: m.password})
+				m.errorMsg = err
 			}
 		}
 	}
@@ -63,19 +70,30 @@ func (m register) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m register) View() string {
+	if m.errorMsg != nil {
+		defer func() {
+			m.errorMsg = nil
+		}()
+		return fmt.Sprintf(
+			"Произошла ошибка \n\n%s\n\n%s",
+			m.errorMsg,
+			modelMessageEscOrQuit,
+		) + "\n"
+	}
+
 	if m.username == "" {
 		return fmt.Sprintf(
 			"Введите желаемое имя пользователя \n\n%s\n\n%s",
 			m.textInput.View(),
-			"(Нажмите Esc для возврата или ctrl+c для выхода)",
+			modelMessageEscOrQuit,
 		) + "\n"
 	}
 	if m.password == "" {
 		return fmt.Sprintf(
 			"Введите желаемый пароль (достаточной длины и с символами в верхнем и нижнем регистрах, цифрами и специальными символами) \n\n%s\n\n%s",
 			m.textInput.View(),
-			"(Нажмите Esc для возврата или ctrl+c для выхода)",
+			modelMessageEscOrQuit,
 		) + "\n"
 	}
-	return fmt.Sprintf("Вы успешно создали аккаунт с именем \"%s\"\n\n(Нажмите Esc для возврата или ctrl+c для выхода)\n", m.username)
+	return fmt.Sprintf("Вы успешно создали аккаунт с именем \"%s\"\n\n%s\n", m.username, modelMessageEscOrQuit)
 }

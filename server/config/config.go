@@ -25,5 +25,6 @@ func (cs *Config) LogLevel() slog.Level {
 func LoadConfig() (*Config, error) {
 	return &Config{
 		address: ":3200",
+		pdsn:    "postgres://praktikum:pass@localhost:5432/praktikum?sslmode=disable",
 	}, nil
 }

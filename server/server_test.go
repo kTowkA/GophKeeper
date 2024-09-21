@@ -8,6 +8,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/google/uuid"
 	pb "github.com/kTowkA/GophKeeper/grpc"
 	"github.com/kTowkA/GophKeeper/internal/model"
 	"github.com/kTowkA/GophKeeper/internal/storage"
@@ -138,7 +139,7 @@ func (suite *ServerTest) TestLogin() {
 			wantError:     true,
 			wantgRPCError: codes.NotFound,
 			mock: func() {
-				suite.ms.On("PasswordHash", mock.Anything, model.StoragePasswordHashRequest{Login: "1"}).Return(model.StoragePasswordHashResponse{}, storage.ErrLoginIsNotExist).Once()
+				suite.ms.On("PasswordHash", mock.Anything, model.StoragePasswordHashRequest{Login: "1"}).Return(model.StoragePasswordHashResponse{}, storage.ErrUserIsNotExist).Once()
 			},
 		},
 		{
@@ -212,6 +213,233 @@ func (suite *ServerTest) TestGeneratePassword() {
 	suite.NoError(validatePassword(resp.Password))
 }
 
+func (suite *ServerTest) TestCreateFolder() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	username := "user"
+	secret := ""
+	token, err := generateToken(username, secret)
+	suite.NoError(err)
+	validCtx := metadata.NewIncomingContext(ctx, metadata.New(map[string]string{TokenTitle: token}))
+
+	tests := []Test{
+		{
+			name: "пользователь не существует",
+			request: &pb.CreateFolderRequest{
+				Title: "1",
+			},
+			ctx:           ctx,
+			wantError:     true,
+			wantgRPCError: codes.Unauthenticated,
+		},
+		{
+			name: "папка уже существует",
+			request: &pb.CreateFolderRequest{
+				Title: "1",
+			},
+			ctx:           validCtx,
+			wantError:     true,
+			wantgRPCError: codes.AlreadyExists,
+			mock: func() {
+				suite.ms.On("CreateFolder", mock.Anything, model.StorageCreateFolderRequest{User: username, Folder: "1"}).Return(model.StorageCreateFolderResponse{}, storage.ErrKeepFolderIsExist).Once()
+			},
+		},
+		{
+			name: "ошибка в БД",
+			request: &pb.CreateFolderRequest{
+				Title: "1",
+			},
+			ctx:       validCtx,
+			wantError: true,
+			mock: func() {
+				suite.ms.On("CreateFolder", mock.Anything, model.StorageCreateFolderRequest{User: username, Folder: "1"}).Return(model.StorageCreateFolderResponse{}, errors.New("ошибка при создании папки")).Once()
+			},
+		},
+		{
+			name: "все ок",
+			request: &pb.CreateFolderRequest{
+				Title: "1",
+			},
+			ctx:       validCtx,
+			wantError: false,
+			mock: func() {
+				suite.ms.On("CreateFolder", mock.Anything, model.StorageCreateFolderRequest{User: username, Folder: "1"}).Return(model.StorageCreateFolderResponse{FolderID: uuid.New()}, nil).Once()
+			},
+		},
+	}
+	for _, t := range tests {
+		if t.mock != nil {
+			t.mock()
+		}
+		_, err := suite.gs.CreateFolder(t.ctx, (t.request).(*pb.CreateFolderRequest))
+		if !t.wantError {
+			suite.NoError(err, t.name)
+			continue
+		}
+		if t.wantgRPCError > 0 {
+			if e, ok := status.FromError(err); ok {
+				suite.EqualValues(t.wantgRPCError, e.Code(), t.name)
+			} else {
+				suite.Fail("должна содержаться ошибка", t.name)
+			}
+			continue
+		}
+		suite.Error(err, t.name)
+	}
+}
+func (suite *ServerTest) TestFolders() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	username := "user"
+	secret := ""
+	token, err := generateToken(username, secret)
+	suite.NoError(err)
+	validCtx := metadata.NewIncomingContext(ctx, metadata.New(map[string]string{TokenTitle: token}))
+
+	tests := []Test{
+		{
+			name:          "пользователь не существует",
+			request:       &pb.FoldersRequest{},
+			ctx:           ctx,
+			wantError:     true,
+			wantgRPCError: codes.Unauthenticated,
+		},
+		{
+			name:          "папок нет",
+			request:       &pb.FoldersRequest{},
+			ctx:           validCtx,
+			wantError:     true,
+			wantgRPCError: codes.NotFound,
+			mock: func() {
+				suite.ms.On("Folders", mock.Anything, model.StorageFoldersRequest{User: username}).Return(model.StorageFoldersResponse{}, storage.ErrKeepFolderNotExist).Once()
+			},
+		},
+		{
+			name:      "ошибка в БД",
+			request:   &pb.FoldersRequest{},
+			ctx:       validCtx,
+			wantError: true,
+			mock: func() {
+				suite.ms.On("Folders", mock.Anything, model.StorageFoldersRequest{User: username}).Return(model.StorageFoldersResponse{}, errors.New("ошибка при запросе папок")).Once()
+			},
+		},
+		{
+			name:      "все ок",
+			request:   &pb.FoldersRequest{},
+			ctx:       validCtx,
+			wantError: false,
+			mock: func() {
+				suite.ms.On("Folders", mock.Anything, model.StorageFoldersRequest{User: username}).Return(model.StorageFoldersResponse{}, nil).Once()
+			},
+		},
+	}
+	for _, t := range tests {
+		if t.mock != nil {
+			t.mock()
+		}
+		_, err := suite.gs.Folders(t.ctx, (t.request).(*pb.FoldersRequest))
+		if !t.wantError {
+			suite.NoError(err, t.name)
+			continue
+		}
+		if t.wantgRPCError > 0 {
+			if e, ok := status.FromError(err); ok {
+				suite.EqualValues(t.wantgRPCError, e.Code(), t.name)
+			} else {
+				suite.Fail("должна содержаться ошибка", t.name)
+			}
+			continue
+		}
+		suite.Error(err, t.name)
+	}
+}
+func (suite *ServerTest) TestValues() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	username := "user"
+	secret := ""
+	token, err := generateToken(username, secret)
+	suite.NoError(err)
+	validCtx := metadata.NewIncomingContext(ctx, metadata.New(map[string]string{TokenTitle: token}))
+
+	tests := []Test{
+		{
+			name:          "пользователь не существует",
+			request:       &pb.ValuesInFolderRequest{},
+			ctx:           ctx,
+			wantError:     true,
+			wantgRPCError: codes.Unauthenticated,
+		},
+		{
+			name: "папок нет",
+			request: &pb.ValuesInFolderRequest{
+				Folder: "folder",
+			},
+			ctx:           validCtx,
+			wantError:     true,
+			wantgRPCError: codes.NotFound,
+			mock: func() {
+				suite.ms.On("Values", mock.Anything, model.StorageValuesRequest{User: username, Folder: "folder"}).Return(model.StorageValuesResponse{}, storage.ErrKeepFolderNotExist).Once()
+			},
+		},
+		{
+			name: "значений нет",
+			request: &pb.ValuesInFolderRequest{
+				Folder: "folder",
+			},
+			ctx:           validCtx,
+			wantError:     true,
+			wantgRPCError: codes.NotFound,
+			mock: func() {
+				suite.ms.On("Values", mock.Anything, model.StorageValuesRequest{User: username, Folder: "folder"}).Return(model.StorageValuesResponse{}, storage.ErrKeepValueNotExist).Once()
+			},
+		},
+		{
+			name: "ошибка в БД",
+			request: &pb.ValuesInFolderRequest{
+				Folder: "folder",
+			},
+			ctx:       validCtx,
+			wantError: true,
+			mock: func() {
+				suite.ms.On("Values", mock.Anything, model.StorageValuesRequest{User: username, Folder: "folder"}).Return(model.StorageValuesResponse{}, errors.New("ошибка при запросе содержимого папки")).Once()
+			},
+		},
+		{
+			name: "все хорошо",
+			request: &pb.ValuesInFolderRequest{
+				Folder: "folder",
+			},
+			ctx:       validCtx,
+			wantError: false,
+			mock: func() {
+				suite.ms.On("Values", mock.Anything, model.StorageValuesRequest{User: username, Folder: "folder"}).Return(model.StorageValuesResponse{}, nil).Once()
+			},
+		},
+	}
+	for _, t := range tests {
+		if t.mock != nil {
+			t.mock()
+		}
+		_, err := suite.gs.Values(t.ctx, (t.request).(*pb.ValuesInFolderRequest))
+		if !t.wantError {
+			suite.NoError(err, t.name)
+			continue
+		}
+		if t.wantgRPCError > 0 {
+			if e, ok := status.FromError(err); ok {
+				suite.EqualValues(t.wantgRPCError, e.Code(), t.name)
+			} else {
+				suite.Fail("должна содержаться ошибка", t.name)
+			}
+			continue
+		}
+		suite.Error(err, t.name)
+	}
+}
 func (suite *ServerTest) TestSave() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -228,7 +456,7 @@ func (suite *ServerTest) TestSave() {
 			wantError:     true,
 			wantgRPCError: codes.Unauthenticated,
 			request: &pb.SaveRequest{
-				Value: &pb.KeeperElement{},
+				Value: &pb.KeeperValue{},
 			},
 		},
 		{
@@ -236,7 +464,7 @@ func (suite *ServerTest) TestSave() {
 			ctx:       validCtx,
 			wantError: true,
 			request: &pb.SaveRequest{
-				Value: &pb.KeeperElement{},
+				Value: &pb.KeeperValue{},
 			},
 			mock: func() {
 				suite.ms.On("Save", mock.Anything, mock.AnythingOfType("model.StorageSaveRequest")).Return(model.StorageSaveResponse{}, errors.New("ошибка при сохранении данных")).Once()
@@ -245,12 +473,24 @@ func (suite *ServerTest) TestSave() {
 		{
 			name: "все хорошо",
 			request: &pb.SaveRequest{
-				Value: &pb.KeeperElement{},
+				Value: &pb.KeeperValue{},
 			},
 			ctx:       validCtx,
 			wantError: false,
 			mock: func() {
 				suite.ms.On("Save", mock.Anything, mock.AnythingOfType("model.StorageSaveRequest")).Return(model.StorageSaveResponse{}, nil).Once()
+			},
+		},
+		{
+			name: "дубль",
+			request: &pb.SaveRequest{
+				Value: &pb.KeeperValue{},
+			},
+			ctx:           validCtx,
+			wantError:     true,
+			wantgRPCError: codes.AlreadyExists,
+			mock: func() {
+				suite.ms.On("Save", mock.Anything, mock.AnythingOfType("model.StorageSaveRequest")).Return(model.StorageSaveResponse{}, storage.ErrKeepValueIsExist).Once()
 			},
 		},
 	}
@@ -296,12 +536,14 @@ func (suite *ServerTest) TestLoad() {
 			ctx:       validCtx,
 			wantError: true,
 			request: &pb.LoadRequest{
-				Title: "111",
+				Title:  "title",
+				Folder: "folder",
 			},
 			mock: func() {
 				suite.ms.On("Load", mock.Anything, model.StorageLoadRequest{
-					User:               username,
-					TitleKeeperElement: "111",
+					User:   username,
+					Folder: "folder",
+					Title:  "title",
 				}).Return(model.StorageLoadResponse{}, errors.New("ошибка при запросе данных")).Once()
 			},
 		},
@@ -310,13 +552,32 @@ func (suite *ServerTest) TestLoad() {
 			ctx:       validCtx,
 			wantError: false,
 			request: &pb.LoadRequest{
-				Title: "111",
+				Title:  "title",
+				Folder: "folder",
 			},
 			mock: func() {
 				suite.ms.On("Load", mock.Anything, model.StorageLoadRequest{
-					User:               username,
-					TitleKeeperElement: "111",
+					User:   username,
+					Folder: "folder",
+					Title:  "title",
 				}).Return(model.StorageLoadResponse{}, nil).Once()
+			},
+		},
+		{
+			name:          "данных нет",
+			ctx:           validCtx,
+			wantError:     true,
+			wantgRPCError: codes.NotFound,
+			request: &pb.LoadRequest{
+				Title:  "title",
+				Folder: "folder",
+			},
+			mock: func() {
+				suite.ms.On("Load", mock.Anything, model.StorageLoadRequest{
+					User:   username,
+					Folder: "folder",
+					Title:  "title",
+				}).Return(model.StorageLoadResponse{}, storage.ErrKeepValueNotExist).Once()
 			},
 		},
 	}

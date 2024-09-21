@@ -14,6 +14,62 @@ type KeepStorager struct {
 	mock.Mock
 }
 
+// CreateFolder provides a mock function with given fields: _a0, _a1
+func (_m *KeepStorager) CreateFolder(_a0 context.Context, _a1 model.StorageCreateFolderRequest) (model.StorageCreateFolderResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateFolder")
+	}
+
+	var r0 model.StorageCreateFolderResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.StorageCreateFolderRequest) (model.StorageCreateFolderResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, model.StorageCreateFolderRequest) model.StorageCreateFolderResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(model.StorageCreateFolderResponse)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, model.StorageCreateFolderRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Folders provides a mock function with given fields: _a0, _a1
+func (_m *KeepStorager) Folders(_a0 context.Context, _a1 model.StorageFoldersRequest) (model.StorageFoldersResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Folders")
+	}
+
+	var r0 model.StorageFoldersResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.StorageFoldersRequest) (model.StorageFoldersResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, model.StorageFoldersRequest) model.StorageFoldersResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(model.StorageFoldersResponse)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, model.StorageFoldersRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Load provides a mock function with given fields: _a0, _a1
 func (_m *KeepStorager) Load(_a0 context.Context, _a1 model.StorageLoadRequest) (model.StorageLoadResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -62,6 +118,34 @@ func (_m *KeepStorager) Save(_a0 context.Context, _a1 model.StorageSaveRequest) 
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, model.StorageSaveRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Values provides a mock function with given fields: _a0, _a1
+func (_m *KeepStorager) Values(_a0 context.Context, _a1 model.StorageValuesRequest) (model.StorageValuesResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Values")
+	}
+
+	var r0 model.StorageValuesResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.StorageValuesRequest) (model.StorageValuesResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, model.StorageValuesRequest) model.StorageValuesResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(model.StorageValuesResponse)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, model.StorageValuesRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

@@ -25,7 +25,7 @@ func (s *Server) Login(ctx context.Context, r *pb.LoginRequest) (*pb.LoginRespon
 		},
 	)
 	switch {
-	case errors.Is(err, storage.ErrLoginIsNotExist):
+	case errors.Is(err, storage.ErrUserIsNotExist):
 		s.log.Debug("попытка входа несуществующего пользователя", slog.String("логин", r.Login))
 		return nil, status.Error(codes.NotFound, "пользователь не найден")
 	case err != nil:

@@ -4,7 +4,9 @@ import "errors"
 
 var (
 	ErrLoginIsAlreadyOccupied = errors.New("такой логин уже занят")
-	ErrLoginIsNotExist        = errors.New("пользователя с таким логином не существует")
-	ErrKeepElementIsExist     = errors.New("такой элемент уже существует")
-	ErrKeepElementNotExist    = errors.New("такой элемент не существует")
+	ErrUserIsNotExist         = errors.New("пользователя с таким логином не существует")
+	ErrKeepFolderIsExist      = errors.New("такая папка уже существует")
+	ErrKeepFolderNotExist     = errors.New("такая папка не существует")
+	ErrKeepValueIsExist       = errors.New("такое значение уже существует")
+	ErrKeepValueNotExist      = errors.New("такое значение не существует")
 )

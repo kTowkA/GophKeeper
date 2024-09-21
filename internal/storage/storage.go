@@ -16,6 +16,9 @@ type UserStorager interface {
 }
 
 type KeepStorager interface {
+	CreateFolder(context.Context, model.StorageCreateFolderRequest) (model.StorageCreateFolderResponse, error)
+	Folders(context.Context, model.StorageFoldersRequest) (model.StorageFoldersResponse, error)
+	Values(context.Context, model.StorageValuesRequest) (model.StorageValuesResponse, error)
 	Save(context.Context, model.StorageSaveRequest) (model.StorageSaveResponse, error)
 	Load(context.Context, model.StorageLoadRequest) (model.StorageLoadResponse, error)
 }
