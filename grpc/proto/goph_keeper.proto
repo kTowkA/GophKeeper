@@ -5,7 +5,7 @@ package gophkeeper;
 option go_package = "./grpc";
 
 message GeneratePasswordRequest{
-  int32 length = 1 [json_name = "length"];
+  int64 length = 1 [json_name = "length"];
 }
 message GeneratePasswordResponse{
   string password = 1 [json_name = "password"];

@@ -222,5 +222,5 @@ func (p *Postgres) folderID(ctx context.Context, userID uuid.UUID, folder string
 	if err != nil {
 		return uuid.UUID{}, err
 	}
-	return userID, nil
+	return folderID, nil
 }

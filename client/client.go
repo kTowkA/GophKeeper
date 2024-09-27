@@ -6,6 +6,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/kTowkA/GophKeeper/client/config"
+	"github.com/kTowkA/GophKeeper/client/models"
+	"github.com/kTowkA/GophKeeper/client/models/options"
 	pb "github.com/kTowkA/GophKeeper/grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -44,11 +46,7 @@ func Run(ctx context.Context, cfg config.Config) error {
 
 	gClient := pb.NewGophKeeperClient(conn)
 
-	service := &Gophkeeper{
-		gClient: gClient,
-	}
-
-	p := tea.NewProgram(Initial(service))
+	p := tea.NewProgram(models.NewController(ctx, options.CreateOptions(gClient, options.SimpleCrypter{})))
 	if _, err := p.Run(); err != nil {
 		return err
 	}
