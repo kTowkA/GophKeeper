@@ -11,6 +11,7 @@ import (
 	"github.com/kTowkA/GophKeeper/internal/storage"
 )
 
+// Save - реализация интефейса storage.KeepStorager
 func (p *Postgres) Save(ctx context.Context, r model.StorageSaveRequest) (model.StorageSaveResponse, error) {
 	userID, err := p.userID(ctx, r.User)
 	if err != nil {
@@ -67,6 +68,8 @@ func (p *Postgres) Save(ctx context.Context, r model.StorageSaveRequest) (model.
 	err = tx.Commit(ctx)
 	return model.StorageSaveResponse{ValueID: valueID}, err
 }
+
+// Load - реализация интефейса storage.KeepStorager
 func (p *Postgres) Load(ctx context.Context, r model.StorageLoadRequest) (model.StorageLoadResponse, error) {
 	userID, err := p.userID(ctx, r.User)
 	if err != nil {
@@ -103,6 +106,8 @@ func (p *Postgres) Load(ctx context.Context, r model.StorageLoadRequest) (model.
 	}
 	return model.StorageLoadResponse{Value: value}, nil
 }
+
+// CreateFolder - реализация интефейса storage.KeepStorager
 func (p *Postgres) CreateFolder(ctx context.Context, r model.StorageCreateFolderRequest) (model.StorageCreateFolderResponse, error) {
 	userID, err := p.userID(ctx, r.User)
 	if err != nil {
@@ -133,6 +138,8 @@ func (p *Postgres) CreateFolder(ctx context.Context, r model.StorageCreateFolder
 	)
 	return model.StorageCreateFolderResponse{FolderID: folderID}, err
 }
+
+// Folders - реализация интефейса storage.KeepStorager
 func (p *Postgres) Folders(ctx context.Context, r model.StorageFoldersRequest) (model.StorageFoldersResponse, error) {
 	userID, err := p.userID(ctx, r.User)
 	if err != nil {
@@ -164,6 +171,8 @@ func (p *Postgres) Folders(ctx context.Context, r model.StorageFoldersRequest) (
 	}
 	return model.StorageFoldersResponse{Folders: foldes}, nil
 }
+
+// Values - реализация интефейса storage.KeepStorager
 func (p *Postgres) Values(ctx context.Context, r model.StorageValuesRequest) (model.StorageValuesResponse, error) {
 	userID, err := p.userID(ctx, r.User)
 	if err != nil {
@@ -208,6 +217,7 @@ func (p *Postgres) Values(ctx context.Context, r model.StorageValuesRequest) (mo
 	}
 	return model.StorageValuesResponse{Values: values}, nil
 }
+
 func (p *Postgres) folderID(ctx context.Context, userID uuid.UUID, folder string) (uuid.UUID, error) {
 	var folderID uuid.UUID
 	err := p.Pool.QueryRow(

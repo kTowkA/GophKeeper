@@ -1,3 +1,4 @@
+// здесь описание модели где пролисходит отображение списка с данными
 package models
 
 import (
@@ -9,7 +10,6 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/kTowkA/GophKeeper/client/models/options"
 )
 
 const listHeight = 14
@@ -54,7 +54,6 @@ type modelWithList struct {
 	list      list.Model
 	items     []list.Item
 	choice    string
-	opt       *options.Options
 	err       error
 	title     string
 	next      model

@@ -1,3 +1,4 @@
+// полноценный Suite-тест работы сервера. Все реализованные методы gRPC-сервера проверены
 package server
 
 import (
@@ -221,7 +222,7 @@ func (suite *ServerTest) TestCreateFolder() {
 	secret := ""
 	token, err := generateToken(username, secret)
 	suite.NoError(err)
-	validCtx := metadata.NewIncomingContext(ctx, metadata.New(map[string]string{TokenTitle: token}))
+	validCtx := metadata.NewIncomingContext(ctx, metadata.New(map[string]string{tokenTitle: token}))
 
 	tests := []Test{
 		{
@@ -296,7 +297,7 @@ func (suite *ServerTest) TestFolders() {
 	secret := ""
 	token, err := generateToken(username, secret)
 	suite.NoError(err)
-	validCtx := metadata.NewIncomingContext(ctx, metadata.New(map[string]string{TokenTitle: token}))
+	validCtx := metadata.NewIncomingContext(ctx, metadata.New(map[string]string{tokenTitle: token}))
 
 	tests := []Test{
 		{
@@ -363,7 +364,7 @@ func (suite *ServerTest) TestValues() {
 	secret := ""
 	token, err := generateToken(username, secret)
 	suite.NoError(err)
-	validCtx := metadata.NewIncomingContext(ctx, metadata.New(map[string]string{TokenTitle: token}))
+	validCtx := metadata.NewIncomingContext(ctx, metadata.New(map[string]string{tokenTitle: token}))
 
 	tests := []Test{
 		{
@@ -448,7 +449,7 @@ func (suite *ServerTest) TestSave() {
 	secret := ""
 	token, err := generateToken(username, secret)
 	suite.NoError(err)
-	validCtx := metadata.NewIncomingContext(ctx, metadata.New(map[string]string{TokenTitle: token}))
+	validCtx := metadata.NewIncomingContext(ctx, metadata.New(map[string]string{tokenTitle: token}))
 	tests := []Test{
 		{
 			name:          "ошибка получения пользователя",
@@ -522,7 +523,7 @@ func (suite *ServerTest) TestLoad() {
 	secret := ""
 	token, err := generateToken(username, secret)
 	suite.NoError(err)
-	validCtx := metadata.NewIncomingContext(ctx, metadata.New(map[string]string{TokenTitle: token}))
+	validCtx := metadata.NewIncomingContext(ctx, metadata.New(map[string]string{tokenTitle: token}))
 	tests := []Test{
 		{
 			name:          "ошибка получения пользователя",

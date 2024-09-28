@@ -19,9 +19,12 @@ import (
 )
 
 const (
-	TokenTitle = "token"
+	// tokenTitle ключ токена в контексте
+	tokenTitle = "token"
 )
 
+// Server стуктура сервера. При вызове метода Run создается автоматически
+// реализует интерфейс UnimplementedGophKeeperServer
 type Server struct {
 	log    *slog.Logger
 	config config.Config
@@ -29,6 +32,7 @@ type Server struct {
 	pb.UnimplementedGophKeeperServer
 }
 
+// newServer создание экземпляра сервера
 func newServer(config config.Config, db storage.Storager) (*Server, error) {
 	if db == nil {
 		return nil, errors.New("для корректной работы сервера необходимо установить хранилище")
@@ -43,6 +47,7 @@ func newServer(config config.Config, db storage.Storager) (*Server, error) {
 	return &server, nil
 }
 
+// Run запуск сервера по адресу указанному в config. При завершении работы по сигналу контекста ошибку не возвращает
 func Run(ctx context.Context, db storage.Storager, config config.Config) error {
 	s, err := newServer(config, db)
 	if err != nil {
@@ -54,6 +59,7 @@ func Run(ctx context.Context, db storage.Storager, config config.Config) error {
 
 	gr, grCtx := errgroup.WithContext(ctx)
 
+	// горутина завершения работы
 	gr.Go(func() error {
 		defer s.log.Info("сервер был остановлен")
 
@@ -64,6 +70,7 @@ func Run(ctx context.Context, db storage.Storager, config config.Config) error {
 		return nil
 	})
 
+	// горутина запуска gRPC сервера
 	gr.Go(func() error {
 		pb.RegisterGophKeeperServer(gRPCServer, s)
 
@@ -82,12 +89,14 @@ func Run(ctx context.Context, db storage.Storager, config config.Config) error {
 	return gr.Wait()
 }
 
+// usernameFromToken получение имени пользователя из переданного токена (+ проверка валидации токена)
+// нужна так как в запросах к хранилищу указывается пользователь
 func usernameFromToken(ctx context.Context, secret string) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return "", errors.New("не найден контекст для проверки доступа")
 	}
-	tokenCtx := md.Get(TokenTitle)
+	tokenCtx := md.Get(tokenTitle)
 	if len(tokenCtx) == 0 {
 		return "", errors.New("не найден токен в переданном контексте")
 	}

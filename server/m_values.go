@@ -1,3 +1,4 @@
+// в файле содержатся реализации методов gRPC-сервера для работы с получением списка данных в директории
 package server
 
 import (
@@ -12,6 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// Values реализует метод интерфейса UnimplementedGophKeeperServer. получение списка данных в директории
 func (s *Server) Values(ctx context.Context, r *pb.ValuesInFolderRequest) (*pb.ValuesInFolderResponse, error) {
 	username, err := usernameFromToken(ctx, s.config.Secret())
 	if err != nil {

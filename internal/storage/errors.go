@@ -1,3 +1,4 @@
+// стандартные ошибки хранилища
 package storage
 
 import "errors"

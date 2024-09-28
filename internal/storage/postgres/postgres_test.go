@@ -1,3 +1,4 @@
+// в данном файле содержится Suite-тест для всех реализованных методов Postgres
 package postgres
 
 import (

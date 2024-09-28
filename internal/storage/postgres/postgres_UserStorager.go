@@ -12,6 +12,7 @@ import (
 	"github.com/kTowkA/GophKeeper/internal/storage"
 )
 
+// Register - реализация интефейса storage.UserStorager
 func (p *Postgres) Register(ctx context.Context, r model.StorageRegisterRequest) (model.StorageRegisterResponse, error) {
 	login := strings.TrimSpace(strings.ToLower(r.Login))
 	if login == "" {
@@ -41,6 +42,8 @@ func (p *Postgres) Register(ctx context.Context, r model.StorageRegisterRequest)
 	}
 	return model.StorageRegisterResponse{}, nil
 }
+
+// PasswordHash - реализация интефейса storage.UserStorager
 func (p *Postgres) PasswordHash(ctx context.Context, r model.StoragePasswordHashRequest) (model.StoragePasswordHashResponse, error) {
 	login := strings.ToLower(r.Login)
 	passwordHash := ""
@@ -59,6 +62,7 @@ func (p *Postgres) PasswordHash(ctx context.Context, r model.StoragePasswordHash
 		PasswordHash: passwordHash,
 	}, nil
 }
+
 func (p *Postgres) userID(ctx context.Context, login string) (uuid.UUID, error) {
 	login = strings.ToLower(login)
 	var userID uuid.UUID

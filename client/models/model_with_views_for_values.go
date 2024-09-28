@@ -1,10 +1,10 @@
+// здесь описание модели где только просмотр данных возможен
 package models
 
 import (
 	"context"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/kTowkA/GophKeeper/client/models/options"
 )
 
 type viewMoidel struct {
@@ -15,7 +15,6 @@ type viewMoidel struct {
 	header    string
 	footer    string
 	err       error
-	opt       *options.Options
 	getValues func() ([]viewV, error)
 }
 type viewV struct {

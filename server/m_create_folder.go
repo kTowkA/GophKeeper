@@ -1,3 +1,4 @@
+// в файле содержатся реализации методов gRPC-сервера для создания директорий
 package server
 
 import (
@@ -12,6 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// CreateFolder реализует метод интерфейса UnimplementedGophKeeperServer. Создает директорию
 func (s *Server) CreateFolder(ctx context.Context, r *pb.CreateFolderRequest) (*pb.CreateFolderResponse, error) {
 	username, err := usernameFromToken(ctx, s.config.Secret())
 	if err != nil {

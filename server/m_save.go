@@ -1,3 +1,4 @@
+// в файле содержатся реализации методов gRPC-сервера для работы с сохранением конкретных данных
 package server
 
 import (
@@ -12,6 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// Save реализует метод интерфейса UnimplementedGophKeeperServer. Сохранение данных
 func (s *Server) Save(ctx context.Context, r *pb.SaveRequest) (*pb.SaveResponse, error) {
 	username, err := usernameFromToken(ctx, s.config.Secret())
 	if err != nil {

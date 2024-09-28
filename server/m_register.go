@@ -1,3 +1,4 @@
+// в файле содержатся реализации методов gRPC-сервера для работы с прегистрацией пользователя
 package server
 
 import (
@@ -34,6 +35,7 @@ var (
 	ErrValidatePasswordSymbols   = fmt.Errorf("пароль должен содержать специальные символы \"%s\"", strings.Join(symbols, ""))
 )
 
+// Register реализует метод интерфейса UnimplementedGophKeeperServer. Регистрация пользователя
 func (s *Server) Register(ctx context.Context, r *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 	err := validatePassword(r.Password)
 	if err != nil {

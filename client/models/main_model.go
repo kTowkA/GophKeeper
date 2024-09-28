@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/kTowkA/GophKeeper/client/models/options"
 )
 
 type pageType int
@@ -33,7 +32,6 @@ type page struct {
 }
 
 type modelMain struct {
-	opt         *options.Options
 	pages       map[pageType]page
 	currentPage pageType
 }
@@ -44,7 +42,6 @@ func (ctrl *Controller) WithContext(ctx context.Context) model {
 }
 func (ctrl *Controller) initMM() {
 	mm := &modelMain{
-		opt:         ctrl.opt,
 		currentPage: pageMain,
 		pages: map[pageType]page{
 			pageMain: {

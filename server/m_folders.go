@@ -1,3 +1,4 @@
+// в файле содержатся реализации методов gRPC-сервера для работы с получением списка директорий пользователя
 package server
 
 import (
@@ -12,6 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// Folders реализует метод интерфейса UnimplementedGophKeeperServer. Получает список директорий
 func (s *Server) Folders(ctx context.Context, r *pb.FoldersRequest) (*pb.FoldersResponse, error) {
 	username, err := usernameFromToken(ctx, s.config.Secret())
 	if err != nil {

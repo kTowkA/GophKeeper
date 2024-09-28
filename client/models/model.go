@@ -5,7 +5,6 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/kTowkA/GophKeeper/client/models/options"
 )
 
 // тип для значения контекста
@@ -21,6 +20,7 @@ const (
 	ctxValues
 )
 
+// model все наши кастомные модели должны реализовывать этот интерфейс для корректной передачи значений по стеку вызовов
 type model interface {
 	WithContext(ctx context.Context) model
 	WithNext(next model) model
@@ -28,6 +28,7 @@ type model interface {
 	tea.Model
 }
 
+// Controller главная управляющая структура, которая содержит все используемые в настоящий момент модели
 type Controller struct {
 	ctx               context.Context
 	main              *modelMain
@@ -39,13 +40,14 @@ type Controller struct {
 	mFolderList       model
 	mValuesList       model
 	mValue            model
-	opt               *options.Options
+	services          *Services
 }
 
-func NewController(ctx context.Context, opt *options.Options) *Controller {
+// NewController создание нашего контроллера и инициализация конкретных моделей
+func NewController(ctx context.Context, services *Services) *Controller {
 	ctrl := &Controller{
-		opt: opt,
-		ctx: ctx,
+		services: services,
+		ctx:      ctx,
 	}
 	ctrl.initMM()
 	ctrl.initCFM()

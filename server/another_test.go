@@ -1,3 +1,4 @@
+// иные тесты (не Suite)
 package server
 
 import (
@@ -110,7 +111,7 @@ func TestGetUsername(t *testing.T) {
 	assert.NoError(t, err)
 
 	// ok
-	md := metadata.New(map[string]string{TokenTitle: token})
+	md := metadata.New(map[string]string{tokenTitle: token})
 	ctx := metadata.NewIncomingContext(context.Background(), md)
 	haveUsername, err := usernameFromToken(ctx, secret)
 	assert.NoError(t, err)

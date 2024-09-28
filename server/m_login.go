@@ -1,3 +1,4 @@
+// в файле содержатся реализации методов gRPC-сервера для работы с авторизацией пользователя
 package server
 
 import (
@@ -17,6 +18,7 @@ import (
 
 const TokenExp12Hours = 12 * time.Hour
 
+// Login реализует метод интерфейса UnimplementedGophKeeperServer. Авторизация пользователя
 func (s *Server) Login(ctx context.Context, r *pb.LoginRequest) (*pb.LoginResponse, error) {
 	resp, err := s.db.PasswordHash(
 		ctx,

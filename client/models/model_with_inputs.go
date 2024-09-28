@@ -1,3 +1,4 @@
+// здесь описание модели где возможен ввод данных
 package models
 
 import (
@@ -5,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/kTowkA/GophKeeper/client/models/options"
 )
 
 type textinputWithReq struct {
@@ -15,7 +15,6 @@ type textinputWithReq struct {
 type modelWithInputs struct {
 	focusIndex    int
 	inputs        []textinputWithReq
-	opt           *options.Options
 	err           error
 	status        bool
 	button        string
@@ -42,15 +41,9 @@ func (m *modelWithInputs) WithPrev(prev model) model {
 	m.prev = prev
 	return m
 }
-func (m *modelWithInputs) SetOption(opt *options.Options) *modelWithInputs {
-	m.opt = opt
-	return m
-}
-
 func (m *modelWithInputs) Init() tea.Cmd {
 	return textinput.Blink
 }
-
 func (m *modelWithInputs) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:

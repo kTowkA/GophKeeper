@@ -1,3 +1,4 @@
+// в файле содержатся реализации методов gRPC-сервера для работы с получением конкретных данных
 package server
 
 import (
@@ -12,6 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// Load реализует метод интерфейса UnimplementedGophKeeperServer. Получает конкретные данные пользователя в конкретной директории
 func (s *Server) Load(ctx context.Context, r *pb.LoadRequest) (*pb.LoadResponse, error) {
 	username, err := usernameFromToken(ctx, s.config.Secret())
 	if err != nil {

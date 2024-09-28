@@ -39,7 +39,6 @@ func (ctrl *Controller) initCFM() {
 	}
 
 	mcf := &modelWithInputs{
-		opt:           ctrl.opt,
 		inputs:        inputs,
 		button:        "-> Создать <-",
 		focusButton:   styleBlue.Render("-> Создать <-"),
@@ -56,7 +55,7 @@ func (ctrl *Controller) initCFM() {
 			return ErrTokenUndefined
 		}
 		ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(tokenTitle, token))
-		resp, err := mcf.opt.Service().CreateFolder(ctx, &grpc.CreateFolderRequest{
+		resp, err := ctrl.services.RPCService().CreateFolder(ctx, &grpc.CreateFolderRequest{
 			Title:       inputs[0].Model.Value(),
 			Description: inputs[1].Model.Value(),
 		})
@@ -101,7 +100,6 @@ func (ctrl *Controller) initLM() {
 	}
 
 	ml := &modelWithInputs{
-		opt:           ctrl.opt,
 		inputs:        inputs,
 		button:        "-> Авторизация <-",
 		focusButton:   styleBlue.Render("-> Авторизация <-"),
@@ -112,7 +110,7 @@ func (ctrl *Controller) initLM() {
 	ml.execFunc = func() error {
 		ctx, cancel := context.WithTimeout(context.Background(), wait)
 		defer cancel()
-		resp, err := ml.opt.Service().Login(ctx, &grpc.LoginRequest{
+		resp, err := ctrl.services.RPCService().Login(ctx, &grpc.LoginRequest{
 			Login:    inputs[0].Model.Value(),
 			Password: inputs[1].Model.Value(),
 		})
@@ -147,7 +145,6 @@ func (ctrl *Controller) initPGM() {
 		isReq: true,
 	}
 	mpg := &modelWithInputs{
-		opt:           ctrl.opt,
 		inputs:        inputs,
 		button:        "-> Сгенерировать пароль<-",
 		focusButton:   styleBlue.Render("-> Сгенерировать пароль <-"),
@@ -163,7 +160,7 @@ func (ctrl *Controller) initPGM() {
 		if err != nil {
 			return err
 		}
-		resp, err := mpg.opt.Service().GeneratePassword(ctx, &grpc.GeneratePasswordRequest{
+		resp, err := ctrl.services.RPCService().GeneratePassword(ctx, &grpc.GeneratePasswordRequest{
 			Length: int64(val),
 		})
 		if err != nil {
@@ -204,7 +201,6 @@ func (ctrl *Controller) initRM() {
 	}
 
 	mr := &modelWithInputs{
-		opt:           ctrl.opt,
 		inputs:        inputs,
 		button:        "-> Регистрация <-",
 		focusButton:   styleBlue.Render("-> Регистрация <-"),
@@ -216,7 +212,7 @@ func (ctrl *Controller) initRM() {
 	mr.execFunc = func() error {
 		ctx, cancel := context.WithTimeout(context.Background(), wait)
 		defer cancel()
-		resp, err := mr.opt.Service().Register(ctx, &grpc.RegisterRequest{
+		resp, err := ctrl.services.RPCService().Register(ctx, &grpc.RegisterRequest{
 			Login:    inputs[0].Model.Value(),
 			Password: inputs[1].Model.Value(),
 		})
@@ -268,7 +264,6 @@ func (ctrl *Controller) initSDM() {
 	}
 
 	msd := &modelWithInputs{
-		opt:           ctrl.opt,
 		inputs:        inputs,
 		button:        "-> Сохранить <-",
 		focusButton:   styleBlue.Render("-> Сохранить <-"),
@@ -284,7 +279,7 @@ func (ctrl *Controller) initSDM() {
 			msd.err = err
 			return err
 		}
-		evalue, err := ctrl.opt.Crypter().Encrypt([]byte(inputs[2].Model.Value()), password)
+		evalue, err := ctrl.services.Crypter().Encrypt([]byte(inputs[2].Model.Value()), password)
 		if err != nil {
 			return err
 		}
@@ -302,7 +297,7 @@ func (ctrl *Controller) initSDM() {
 			return ErrTokenUndefined
 		}
 		ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(tokenTitle, token))
-		resp, err := msd.opt.Service().Save(ctx, &grpc.SaveRequest{
+		resp, err := ctrl.services.RPCService().Save(ctx, &grpc.SaveRequest{
 			Value: &grpc.KeeperValue{
 				Title:       inputs[0].Model.Value(),
 				Description: inputs[1].Model.Value(),
@@ -338,7 +333,6 @@ func (ctrl *Controller) initLVM() {
 
 	mfl := &modelWithList{
 		list: l,
-		opt:  ctrl.opt,
 	}
 	mfl.getValues = func() ([]string, error) {
 		if mfl.ctx == nil {
@@ -355,7 +349,7 @@ func (ctrl *Controller) initLVM() {
 		ctx, cancel := context.WithTimeout(context.Background(), wait)
 		defer cancel()
 		ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(tokenTitle, token))
-		resp, err := mfl.opt.Service().Values(ctx, &grpc.ValuesInFolderRequest{
+		resp, err := ctrl.services.RPCService().Values(ctx, &grpc.ValuesInFolderRequest{
 			Folder: folder,
 		})
 		if err != nil {
@@ -385,7 +379,6 @@ func (ctrl *Controller) initLFM() {
 
 	mfl := &modelWithList{
 		list: l,
-		opt:  ctrl.opt,
 	}
 	mfl.getValues = func() ([]string, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), wait)
@@ -395,7 +388,7 @@ func (ctrl *Controller) initLFM() {
 			return nil, ErrTokenUndefined
 		}
 		ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(tokenTitle, token))
-		resp, err := mfl.opt.Service().Folders(ctx, &grpc.FoldersRequest{})
+		resp, err := ctrl.services.RPCService().Folders(ctx, &grpc.FoldersRequest{})
 		if err != nil {
 			return nil, err
 		}
@@ -408,7 +401,6 @@ func (ctrl *Controller) initLFM() {
 func (ctrl *Controller) initVM() {
 
 	mv := &viewMoidel{
-		opt:    ctrl.opt,
 		header: "Сохраненные значения",
 		footer: "Для возврата в предыдущее меню нажмите esc. Для выхода нажмите ctrl+c",
 	}
@@ -432,7 +424,7 @@ func (ctrl *Controller) initVM() {
 		ctx, cancel := context.WithTimeout(context.Background(), wait)
 		defer cancel()
 		ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(tokenTitle, token))
-		resp, err := mv.opt.Service().Load(ctx, &grpc.LoadRequest{
+		resp, err := ctrl.services.RPCService().Load(ctx, &grpc.LoadRequest{
 			Folder: folder,
 			Title:  valueTitle,
 		})
@@ -449,7 +441,7 @@ func (ctrl *Controller) initVM() {
 			return nil, errors.New("не задан пароль")
 		}
 
-		val, err := mv.opt.Crypter().Decrypt(resp.Value.Value, password)
+		val, err := ctrl.services.Crypter().Decrypt(resp.Value.Value, password)
 		if err != nil {
 			return nil, err
 		}

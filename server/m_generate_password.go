@@ -1,3 +1,4 @@
+// в файле содержатся реализации методов gRPC-сервера для генерации пароля
 package server
 
 import (
@@ -10,6 +11,7 @@ import (
 	pb "github.com/kTowkA/GophKeeper/grpc"
 )
 
+// GeneratePassword реализует метод интерфейса UnimplementedGophKeeperServer. Генерирует пароль
 func (s *Server) GeneratePassword(ctx context.Context, r *pb.GeneratePasswordRequest) (*pb.GeneratePasswordResponse, error) {
 	password, err := generatePassword(int(r.Length))
 	if err != nil {
@@ -26,10 +28,10 @@ func (s *Server) GeneratePassword(ctx context.Context, r *pb.GeneratePasswordReq
 // генерируемый пароль в равной степени состоит из символов алфавита в нижнем и верхнем регистрах, числел и специальных символов
 func generatePassword(length int) (string, error) {
 	// шаблоны 4-х частей для будущего пароля
-	abcLower := "qwertyuiopasdfghjklzxcvbnm"
-	abcUpper := "QWERTYUIOPASDFGHJKLZXCVBNM"
-	numbers := "1234567890"
-	symbols := "!@#$%^&*()_+-|."
+	abcLower := "qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm"
+	abcUpper := "QWERTYUIOPASDFGHJKLZXCVBNMQWERTYUIOPASDFGHJKLZXCVBNM"
+	numbers := "123456789012345678901234567890"
+	symbols := "!@#$%^&*()_+-|.!@#$%^&*()_+-|.!@#$%^&*()_+-|."
 
 	// проверяем минимальную длину
 	if length < 4 {
